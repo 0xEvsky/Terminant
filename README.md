@@ -1,0 +1,2 @@
+# Terminant
+AI terminal assistant
