@@ -1,11 +1,12 @@
 class Memory:
     def __init__(self):
-        self.messages = [
-            {
+        self.messages = []
+
+    def add_system_message(self, content):
+            self.messages.append({
                 "role": "system",
-                "content": "You are a helpful assistant."
-            }
-        ]
+                "content": content
+            })
 
     def add_user_message(self, content):
         self.messages.append({
@@ -16,6 +17,13 @@ class Memory:
     def add_assistant_message(self, content):
         self.messages.append({
             "role": "assistant",
+            "content": content
+        })
+
+
+    def add_tool_result(self, content):
+        self.messages.append({
+            "role": "tool",
             "content": content
         })
 

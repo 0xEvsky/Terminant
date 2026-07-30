@@ -1,10 +1,9 @@
 from llm.client import LLMClient
 from agent.agent import Agent
 from agent.loop import runAgentLoop
-import os
+from config.config import API_KEY
 
-api_key = os.getenv("OPENROUTER_API_KEY")
-client = LLMClient(api_key=api_key)
+client = LLMClient(api_key=API_KEY)
 agent = Agent(client=client)
 
 runAgentLoop(agent=agent)

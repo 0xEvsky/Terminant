@@ -1,7 +1,10 @@
 from openai import OpenAI
+from config.config import DEFAULT_MODEL
+from logger import log_info
+from tools.registry import tool_registry
 
 class LLMClient:
-    def __init__(self, api_key=None, model="nvidia/nemotron-3-ultra-550b-a55b:free"):
+    def __init__(self, api_key=None, model=DEFAULT_MODEL):
         self.api_key = api_key
         self.model = model
 
@@ -10,20 +13,25 @@ class LLMClient:
             raise ValueError("no messages has been provided")
 
         if not self.api_key:
-            return "LLM not configured: set OPENROUTER_API_KEY to enable API calls."
+            return "Model client not configured: set OPENROUTER_API_KEY to enable API calls."
 
-        return self._call_api(messages)
+        response = self._call_api(messages)
+        return response
 
     def _call_api(self, messages):
-        client = OpenAI(
-            api_key=self.api_key,
-            base_url="https://openrouter.ai/api/v1"
-        )
+        while True:
+            client = OpenAI(
+                api_key=self.api_key,
+                base_url="https://openrouter.ai/api/v1"
+            )
 
-        response = client.chat.completions.create(
-            model=self.model,
-            messages=messages
-        )
 
-        return response.choices[0].message.content
+            response = client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                tools=[tool.to_openai_schema() for tool in tool_registry.values()]
+            )
+
+            if response.choices != None:
+                return response.choices[0].message
 
