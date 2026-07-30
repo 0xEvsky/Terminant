@@ -25,14 +25,14 @@ class Agent:
 
             if model_response.tool_calls:
                 self.handle_tool_call(model_response)
-                log_info(f'Current memory: {self.memory.messages[1:]}')
+                # log_info(f'Current memory: {self.memory.messages[1:]}')
                 continue
             
             response = model_response.content    
             self.memory.add_assistant_message(response)
 
             log_info("Final response generated")
-            log_info(f'Current memory: {self.memory.messages[1:]}')
+            # log_info(f'Current memory: {self.memory.messages[1:]}')
 
             return response
 
