@@ -21,9 +21,26 @@ class Memory:
         })
 
 
-    def add_tool_result(self, content):
+    def add_tool_call(self, id, name, arguments, type='function'):
+        self.messages.append({
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": id,
+                    "type": type,
+                    "function": 
+                    {
+                        "name": name,
+                        "arguments": arguments
+                    }
+                }
+            ]
+        })
+
+    def add_tool_result(self, tool_call_id, content):
         self.messages.append({
             "role": "tool",
+            "tool_call_id": tool_call_id,
             "content": content
         })
 
