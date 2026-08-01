@@ -12,6 +12,7 @@ class Agent:
         self.client: LLMClient = client
         self.memory = Memory()
         self.memory.add_system_message(SYSTEM_PROMPT)
+        self.agent_mode = False
 
     def step(self, messages=None):
         log_info(f"User: {messages}")
@@ -25,14 +26,14 @@ class Agent:
 
             if model_response.tool_calls:
                 self.handle_tool_call(model_response)
-                # log_info(f'Current memory: {self.memory.messages[1:]}')
+                # log_info(f'Tool call.. Memory: {self.memory.messages[1:]}')
                 continue
             
             response = model_response.content    
             self.memory.add_assistant_message(response)
 
             log_info("Final response generated")
-            # log_info(f'Current memory: {self.memory.messages[1:]}')
+            # log_info(f'Normal response.. Memory: {self.memory.messages[1:]}')
 
             return response
 
@@ -47,10 +48,22 @@ class Agent:
         
         log_info(f'called tool: {tool_name}')
         log_info(f'arguments: {arguments}')
-        
-        tool = get_tool(tool_name)
-        
-        result = tool.execute(**arguments)
+
+        result = 'NO RESULT'
+
+        if tool_name == 'agent.check_mode':
+            result = self.check_agent_mode()
+
+        elif self.agent_mode:
+            tool = get_tool(tool_name)
+            
+            result = tool.execute(**arguments)
+
+        log_info(tool_call_id)
         self.memory.add_tool_result(tool_call_id=tool_call_id, content=json.dumps(result))
+
+
+    def check_agent_mode(self) -> dict:
+        return {"agent_mode": self.agent_mode}
         
         

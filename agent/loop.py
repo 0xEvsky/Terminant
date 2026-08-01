@@ -8,7 +8,9 @@ def runAgentLoop(agent: Agent):
         if prompt == 'exit':
             print('Goodbye..')
             break
+        
+        elif prompt == '/agent':
+            agent.agent_mode = True
 
-        # thinking
         resposne = agent.step(prompt)
         display(resposne)

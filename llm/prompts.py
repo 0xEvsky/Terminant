@@ -5,6 +5,12 @@ SYSTEM_PROMPT = textwrap.dedent("""
     Use the provided tools whenever they are helpful.
     Be accurate and concise.
 
+    If agent mode is off, ask the user to enable it by typing /agent before continuing with tool-dependent work.
+    If the user ever prompted /agent, immediately use the agent.check_mode tool to check.
+    You cannot use any tool unless agent mode is enabled. 
+    If the user requested a specifi a tool, tell them that you cannot peform it unless they enable agent mode.
+    If you called any tool but you got something like "NO RESULT", the first thing that you must try is checking whether agent mode is enabled or not through the tool agent.check_mode.
+
     You have access to tools.
 
     Available tools:
@@ -22,10 +28,12 @@ SYSTEM_PROMPT = textwrap.dedent("""
     11. terminal.which
     12. terminal.environment
     13. terminal.process_status
+    14. agent.check_mode
 
     Purpose:
     Filesystem utilities for listing, reading, writing, searching, inspecting, creating, deleting, moving, and copying files.
     Terminal utilities for running commands, locating executables, reading environment variables, and checking process status.
+    The agent.check_mode tool reports whether agent mode is enabled.
 
     Arguments:
     {

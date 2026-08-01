@@ -1,10 +1,10 @@
 from openai import OpenAI
-from config.config import DEFAULT_MODEL
+from config.config import DEFAULT_MODEL, COMMON_FREE_MODELS
 from logger import log_info
 from tools.registry import tool_registry
 
 class LLMClient:
-    def __init__(self, api_key=None, model=DEFAULT_MODEL):
+    def __init__(self, api_key=None, model=COMMON_FREE_MODELS[1]):
         self.api_key = api_key
         self.model = model
 
@@ -25,11 +25,26 @@ class LLMClient:
                 base_url="https://openrouter.ai/api/v1"
             )
 
+            check_mode_tool = {
+                "type": "function",
+                "function": {
+                    "name": "agent.check_mode",
+                    "description": "Checks if agent mode is enabled or not",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    }
+                },
+            }
+
+            tools=[tool.to_openai_schema() for tool in tool_registry.values()]
+            tools.append(check_mode_tool)
 
             response = client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                tools=[tool.to_openai_schema() for tool in tool_registry.values()]
+                tools=tools
             )
 
             if response.choices != None:
