@@ -37,3 +37,11 @@ class AgentIdle(AgentEvent):
 
 class AgentBusy(AgentEvent):
     pass
+
+@dataclass
+class AgentError(AgentEvent):
+    error: str
+
+@dataclass
+class ConversationLoaded(AgentEvent):
+    messages: list

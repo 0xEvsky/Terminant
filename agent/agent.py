@@ -5,7 +5,11 @@ from llm.prompts import SYSTEM_PROMPT
 from logger import log_info
 from tools.registry import get_tool
 from tools.base import Tool
-from events import agent_events
+from events.agent_events import ( 
+    AgentEvent, 
+    UserMessageSubmitted, 
+    AgentBusy, 
+    AssistantMessageFinished )
 from events.event_bus import EventBus
 
 
@@ -17,11 +21,18 @@ class Agent:
         self.agent_mode = False
         self.event_bus = event_bus
 
-    def step(self, messages=None):
-        log_info(f"User: {messages}")
-        if messages:
-            self.event_bus.emit(agent_events.UserMessageSubmitted(message=messages))
-            self.memory.add_user_message(messages)
+        self.event_bus.subscribe(UserMessageSubmitted, self._on_message_submit)
+
+    def emit(self, event: AgentEvent):
+        self.event_bus.emit(event)
+
+    def _on_message_submit(self, event: UserMessageSubmitted):
+        message = event.message
+        log_info(f"User: {message}")
+        if message:
+            self.memory.add_user_message(message)
+
+        self.emit(AgentBusy())
 
         while True:
             log_info("Sending messages to model")
@@ -36,7 +47,7 @@ class Agent:
             
             response = model_response.content    
             self.memory.add_assistant_message(response)
-            self.event_bus.emit(agent_events.AssistantMessageFinished(message=response))
+            self.event_bus.emit(AssistantMessageFinished(message=response))
 
             log_info("Final response generated")
             # log_info(f'Normal response.. Memory: {self.memory.messages[1:]}')

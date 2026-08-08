@@ -1,0 +1,33 @@
+# ui/themes.tcss
+
+Screen {
+    layout: vertical;
+    background: $surface;
+}
+
+#app-container {
+    width: 1fr;
+    height: 1fr;
+    layout: vertical;
+}
+
+#chat-view {
+    width: 1fr;
+    height: 1fr;
+    border: solid $primary;
+    overflow: auto;
+    padding: 1;
+}
+
+#input-bar {
+    width: 1fr;
+    height: auto;
+    border: solid $primary;
+    padding: 1;
+    dock: bottom;
+}
+
+#user-input {
+    width: 1fr;
+    margin: 1;
+}
