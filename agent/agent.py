@@ -31,7 +31,6 @@ class Agent:
         self.event_bus.emit(event)
 
     def _on_message_submit(self, event: UserMessageSubmitted):
-        """Handle user message submission (runs in Textual's event loop thread)."""
         message = event.message
         log_info(f"User: {message}")
         thread = threading.Thread(
@@ -42,12 +41,11 @@ class Agent:
         thread.start()
 
     def _process_message_background(self, message: str):
-        """Process the message (runs in background thread)."""
         if message:
             self.memory.add_user_message(message)
             if message == '/agent':
                 self.agent_mode = True
-                
+
             elif message == '/chat':
                 self.agent_mode = False
 
