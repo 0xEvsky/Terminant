@@ -22,7 +22,7 @@ LogListener = Callable[[LogRecord], None]
 
 class AppLogger:
     def __init__(self, stream: TextIO | None = None):
-        self.stream = stream or sys.stdout
+        self.stream = stream
         self._history: list[LogRecord] = []
         self._listeners: list[LogListener] = []
 
@@ -36,7 +36,8 @@ class AppLogger:
             caller=caller_text,
         )
         self._history.append(record)
-        print(record.format(), file=self.stream)
+        if self.stream is not None:
+            print(record.format(), file=self.stream)
 
         for listener in list(self._listeners):
             listener(record)

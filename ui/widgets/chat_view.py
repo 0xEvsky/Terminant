@@ -1,6 +1,6 @@
 # ui/widgets/chat_view.py
 from textual.containers import Container
-from textual.widgets import Static
+from textual.widgets import RichLog
 from events.event_bus import EventBus
 from events.agent_events import (
     UserMessageSubmitted,
@@ -20,9 +20,12 @@ class ChatView(AgentWidget):
 
     def compose(self):
         """Yield child widgets."""
-        self.message_display = Static(
-            "[b]Terminant[/b]\nType a message below to start the conversation.",
+        self.message_display = RichLog(
             id="message-display",
+            markup=True,
+            highlight=False,
+            wrap=True,
+            auto_scroll=True,
         )
         yield self.message_display
     
@@ -32,6 +35,9 @@ class ChatView(AgentWidget):
         self.subscribe(AssistantMessageFinished, self._on_assistant_message)
         self.subscribe(StreamingToken, self._on_streaming_token)
         self.subscribe(ConversationLoaded, self._on_conversation_loaded)
+
+        if self.message_display:
+            self.message_display.write("[b]Terminant[/b]\nType a message below to start the conversation.")
 
     #handlers
     def _on_user_message(self, event: UserMessageSubmitted) -> None:
@@ -64,4 +70,5 @@ class ChatView(AgentWidget):
             content = "[b]Terminant[/b]\nType a message below to start the conversation."
         
         if self.message_display:
-            self.message_display.update(content)
+            self.message_display.clear()
+            self.message_display.write(content)

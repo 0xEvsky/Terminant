@@ -33,7 +33,6 @@ Screen {
     width: 1fr;
     height: 1fr;
     border: solid $primary;
-    overflow: auto;
     padding: 1;
 }
 
@@ -50,8 +49,8 @@ Screen {
 }
 
 #logs-view {
-    width: 42;
-    min-width: 32;
+    width: 60;
+    min-width: 48;
     height: 1fr;
     border: solid $secondary;
 }
@@ -59,6 +58,5 @@ Screen {
 #log-display {
     width: 1fr;
     height: 1fr;
-    overflow: auto;
     padding: 1;
 }

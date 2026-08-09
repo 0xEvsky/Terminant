@@ -45,6 +45,11 @@ class Agent:
         """Process the message (runs in background thread)."""
         if message:
             self.memory.add_user_message(message)
+            if message == '/agent':
+                self.agent_mode = True
+                
+            elif message == '/chat':
+                self.agent_mode = False
 
         self.event_bus.emit(AgentBusy())
 
@@ -65,6 +70,10 @@ class Agent:
 
                 log_info("Final response generated")
                 return response
+        except Exception as e:
+            log_info(f'Unable to call model API:')
+            log_info(e)
+
         finally:
             self.event_bus.emit(AgentIdle())
 

@@ -12,4 +12,3 @@ agent = Agent(client=client, event_bus=event_bus)
 app = TerminantApp(event_bus=event_bus)
 app.run()
 
-# runAgentLoop(agent=agent)

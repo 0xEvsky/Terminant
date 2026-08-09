@@ -1,10 +1,10 @@
 from openai import OpenAI
-from config.config import DEFAULT_MODEL, COMMON_FREE_MODELS
+from config.config import DEFAULT_MODEL
 from logger import log_info
 from tools.registry import tool_registry
 
 class LLMClient:
-    def __init__(self, api_key=None, model=COMMON_FREE_MODELS[1]):
+    def __init__(self, api_key=None, model=DEFAULT_MODEL):
         self.api_key = api_key
         self.model = model
 

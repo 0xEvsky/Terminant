@@ -1,4 +1,4 @@
-from textual.widgets import Static
+from textual.widgets import RichLog
 
 from events.event_bus import EventBus
 from logger import LogRecord, get_history, subscribe, unsubscribe
@@ -16,12 +16,22 @@ class LogsView(AgentWidget):
         self._log_listener = None
 
     def compose(self):
-        self.log_display = Static("\n".join(self.lines), id="log-display")
+        self.log_display = RichLog(
+            id="log-display",
+            markup=True,
+            highlight=False,
+            wrap=True,
+            auto_scroll=True,
+        )
         yield self.log_display
 
     def on_mount(self) -> None:
         self._log_listener = self._on_log_record
         subscribe(self._log_listener)
+
+        if self.log_display:
+            self.log_display.write("Logs")
+            self.log_display.write("----")
 
         for record in get_history():
             self._append_record(record)
@@ -38,4 +48,6 @@ class LogsView(AgentWidget):
         self.lines = self.lines[-self.max_lines :]
 
         if self.log_display:
-            self.log_display.update("\n".join(self.lines))
+            self.log_display.clear()
+            for line in self.lines:
+                self.log_display.write(line)
