@@ -16,6 +16,15 @@ class ChatView(AgentWidget):
     def __init__(self, event_bus: EventBus, **kwargs):
         super().__init__(event_bus, **kwargs)
         self.messages = []
+        self.message_display = None
+
+    def compose(self):
+        """Yield child widgets."""
+        self.message_display = Static(
+            "[b]Terminant[/b]\nType a message below to start the conversation.",
+            id="message-display",
+        )
+        yield self.message_display
     
     def on_mount(self) -> None:
         """Set up event subscriptions."""
@@ -50,5 +59,9 @@ class ChatView(AgentWidget):
                 content += f"[b]You:[/b] {text}\n\n"
             else:
                 content += f"[b]Assistant:[/b] {text}\n\n"
+
+        if not content:
+            content = "[b]Terminant[/b]\nType a message below to start the conversation."
         
-        self.update(content)
+        if self.message_display:
+            self.message_display.update(content)

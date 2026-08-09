@@ -1,4 +1,5 @@
 import json
+import threading
 from llm.client import LLMClient
 from agent.memory import Memory
 from llm.prompts import SYSTEM_PROMPT
@@ -8,8 +9,11 @@ from tools.base import Tool
 from events.agent_events import ( 
     AgentEvent, 
     UserMessageSubmitted, 
-    AgentBusy, 
-    AssistantMessageFinished )
+    AgentBusy,
+    AgentIdle, 
+    AssistantMessageFinished,
+    ToolStarted,
+    ToolFinished )
 from events.event_bus import EventBus
 
 
@@ -27,32 +31,42 @@ class Agent:
         self.event_bus.emit(event)
 
     def _on_message_submit(self, event: UserMessageSubmitted):
+        """Handle user message submission (runs in Textual's event loop thread)."""
         message = event.message
         log_info(f"User: {message}")
+        thread = threading.Thread(
+            target=self._process_message_background,
+            args=(message, ),
+            daemon=True
+        )
+        thread.start()
+
+    def _process_message_background(self, message: str):
+        """Process the message (runs in background thread)."""
         if message:
             self.memory.add_user_message(message)
 
-        self.emit(AgentBusy())
+        self.event_bus.emit(AgentBusy())
 
-        while True:
-            log_info("Sending messages to model")
-            
-            model_response = self.client.chat(messages=self.memory.get_messages())
-            log_info("Model responded")
+        try:
+            while True:
+                log_info("Sending messages to model")
+                
+                model_response = self.client.chat(messages=self.memory.get_messages())
+                log_info("Model responded")
 
-            if model_response.tool_calls:
-                self.handle_tool_call(model_response)
-                # log_info(f'Tool call.. Memory: {self.memory.messages[1:]}')
-                continue
-            
-            response = model_response.content    
-            self.memory.add_assistant_message(response)
-            self.event_bus.emit(AssistantMessageFinished(message=response))
+                if model_response.tool_calls:
+                    self.handle_tool_call(model_response)
+                    continue
+                
+                response = model_response.content    
+                self.memory.add_assistant_message(response)
+                self.event_bus.emit(AssistantMessageFinished(message=response))
 
-            log_info("Final response generated")
-            # log_info(f'Normal response.. Memory: {self.memory.messages[1:]}')
-
-            return response
+                log_info("Final response generated")
+                return response
+        finally:
+            self.event_bus.emit(AgentIdle())
 
 
     def handle_tool_call(self, model_response):
@@ -73,10 +87,10 @@ class Agent:
 
         elif self.agent_mode:
             tool = get_tool(tool_name)
-            self.event_bus.emit(agent_events.ToolStarted(tool=tool))
+            self.event_bus.emit(ToolStarted(tool=tool))
             
             result = tool.execute(**arguments)
-            self.event_bus.emit(agent_events.ToolFinished(tool=tool))
+            self.event_bus.emit(ToolFinished(tool=tool))
 
         self.memory.add_tool_result(tool_call_id=tool_call_id, content=json.dumps(result))
 

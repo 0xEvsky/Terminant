@@ -11,7 +11,25 @@ Screen {
     layout: vertical;
 }
 
+#body-container {
+    width: 1fr;
+    height: 1fr;
+    layout: horizontal;
+}
+
+#main-pane {
+    width: 1fr;
+    height: 1fr;
+    layout: vertical;
+}
+
 #chat-view {
+    width: 1fr;
+    height: 1fr;
+    layout: vertical;
+}
+
+#message-display {
     width: 1fr;
     height: 1fr;
     border: solid $primary;
@@ -24,10 +42,23 @@ Screen {
     height: auto;
     border: solid $primary;
     padding: 1;
-    dock: bottom;
 }
 
 #user-input {
     width: 1fr;
     margin: 1;
+}
+
+#logs-view {
+    width: 42;
+    min-width: 32;
+    height: 1fr;
+    border: solid $secondary;
+}
+
+#log-display {
+    width: 1fr;
+    height: 1fr;
+    overflow: auto;
+    padding: 1;
 }
