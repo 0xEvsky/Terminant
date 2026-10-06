@@ -1,13 +1,13 @@
 import subprocess
 
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 
 class Execute(Tool):
     @property
     def name(self):
-        return "terminal.execute"
+        return "terminal_execute"
 
     @property
     def description(self):
@@ -35,16 +35,16 @@ class Execute(Tool):
             if completed.returncode != 0:
                 error = error_output or output or f"Command failed with exit code {completed.returncode}"
                 self.log_tool_result(self.name, error)
-                return error
+                return ToolResult(False, error, error)
 
             result = output or "Command executed successfully"
             self.log_tool_result(self.name, result)
-            return result
+            return ToolResult(True, result)
         except FileNotFoundError:
             error = f"Error: Command '{command}' not found"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except PermissionError:
             error = f"Error: Permission denied for '{command}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)

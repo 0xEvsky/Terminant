@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo
 
@@ -6,7 +6,7 @@ from ._common import open_repo
 class GitTag(Tool):
     @property
     def name(self):
-        return "git.tag"
+        return "git_tag"
 
     @property
     def description(self):
@@ -56,7 +56,7 @@ class GitTag(Tool):
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             if action == "list":
@@ -70,27 +70,30 @@ class GitTag(Tool):
                             "message": commit.message.strip(),
                         }
                     )
-                return {"action": action, "tags": tags}
+                return ToolResult(True, {"action": action, "tags": tags})
 
             if not tag_name:
-                return {"error": "tag_name is required"}
+                error = "tag_name is required"
+                return ToolResult(False, {"error": error}, error)
 
             if action == "create":
                 if message:
                     result = repo.create_tag(tag_name, revision, message=message)
                 else:
                     result = repo.create_tag(tag_name, revision)
-                return {
+                return ToolResult(True, {
                     "action": action,
                     "tag": result.name,
                     "revision": revision,
                     "message": message,
-                }
+                })
 
             if action == "delete":
                 repo.delete_tag(tag_name)
-                return {"action": action, "tag": tag_name}
+                return ToolResult(True, {"action": action, "tag": tag_name})
 
-            return {"error": f"Unsupported tag action: {action}"}
+            error = f"Unsupported tag action: {action}"
+            return ToolResult(False, {"error": error}, error)
         except Exception as exc:
-            return {"error": str(exc)}
+            error = str(exc)
+            return ToolResult(False, {"error": error}, error)

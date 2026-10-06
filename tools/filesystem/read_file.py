@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 
 class ReadFile(Tool):
     @property
     def name(self):
-        return "filesystem.read_file"
+        return "filesystem_read_file"
 
     @property
     def description(self):
@@ -30,12 +30,12 @@ class ReadFile(Tool):
         try:
             content = Path(path).read_text(encoding="utf-8")
             self.log_tool_result(self.name, f"{len(content)} characters")
-            return content
+            return ToolResult(True, content)
         except FileNotFoundError:
             error = f"Error: File '{path}' not found"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except PermissionError:
             error = f"Error: Permission denied for '{path}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)

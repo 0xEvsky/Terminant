@@ -1,4 +1,17 @@
+from dataclasses import asdict, dataclass
+from typing import Any
+
 from logger import log_info
+
+
+@dataclass
+class ToolResult:
+    success: bool
+    output: Any = None
+    error: str | None = None
+
+    def to_dict(self):
+        return asdict(self)
 
 class Tool:
     @property
@@ -12,7 +25,7 @@ class Tool:
     def arguments(self):
         ...
 
-    def execute(self, **kwargs):
+    def execute(self, **kwargs) -> ToolResult:
         ...
 
     def to_openai_schema(self):

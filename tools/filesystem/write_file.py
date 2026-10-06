@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 
 class WriteFile(Tool):
     @property
     def name(self):
-        return "filesystem.write_file"
+        return "filesystem_write_file"
 
     @property
     def description(self):
@@ -36,12 +36,12 @@ class WriteFile(Tool):
             Path(path).write_text(content, encoding="utf-8")
             result = f"File '{path}' written successfully"
             self.log_tool_result(self.name, result)
-            return result
+            return ToolResult(True, result)
         except FileNotFoundError:
             error = f"Error: Path '{path}' not found"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except PermissionError:
             error = f"Error: Permission denied for '{path}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)

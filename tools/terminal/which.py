@@ -1,13 +1,13 @@
 import shutil
 
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 
 class Which(Tool):
     @property
     def name(self):
-        return "terminal.which"
+        return "terminal_which"
 
     @property
     def description(self):
@@ -32,15 +32,15 @@ class Which(Tool):
             if path is None:
                 error = f"Error: Command '{command}' not found"
                 self.log_tool_result(self.name, error)
-                return error
+                return ToolResult(False, error, error)
 
             self.log_tool_result(self.name, path)
-            return path
+            return ToolResult(True, path)
         except FileNotFoundError:
             error = f"Error: Command '{command}' not found"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except PermissionError:
             error = f"Error: Permission denied for '{command}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)

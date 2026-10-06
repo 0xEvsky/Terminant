@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 
 class DeleteFile(Tool):
     @property
     def name(self):
-        return "filesystem.delete_file"
+        return "filesystem_delete_file"
 
     @property
     def description(self):
@@ -31,12 +31,12 @@ class DeleteFile(Tool):
             Path(path).unlink()
             result = f"File '{path}' deleted successfully"
             self.log_tool_result(self.name, result)
-            return result
+            return ToolResult(True, result)
         except FileNotFoundError:
             error = f"Error: File '{path}' not found"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except PermissionError:
             error = f"Error: Permission denied for '{path}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)

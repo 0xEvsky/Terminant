@@ -1,14 +1,15 @@
 from pathlib import Path
 import shutil
 
-from tools.base import Tool
+from tools.base import Tool, ToolResult
+from tools.base import ToolResult
 from logger import log_info
 
 
 class CopyFile(Tool):
     @property
     def name(self):
-        return "filesystem.copy_file"
+        return "filesystem_copy_file"
 
     @property
     def description(self):
@@ -37,12 +38,12 @@ class CopyFile(Tool):
             shutil.copy2(str(Path(source)), str(Path(destination)))
             result = f"File copied from '{source}' to '{destination}' successfully"
             self.log_tool_result(self.name, result)
-            return result
+            return ToolResult(True, result)
         except FileNotFoundError:
             error = f"Error: File '{source}' not found"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except PermissionError:
             error = f"Error: Permission denied for '{source}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)

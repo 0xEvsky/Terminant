@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo, status_snapshot
 
@@ -6,7 +6,7 @@ from ._common import open_repo, status_snapshot
 class GitCheckout(Tool):
     @property
     def name(self):
-        return "git.checkout"
+        return "git_checkout"
 
     @property
     def description(self):
@@ -64,7 +64,7 @@ class GitCheckout(Tool):
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             if paths:
@@ -78,7 +78,8 @@ class GitCheckout(Tool):
                 action = "restore_files"
             else:
                 if not target:
-                    return {"error": "target is required when switching branches"}
+                    error = "target is required when switching branches"
+                    return ToolResult(False, {"error": error}, error)
                 checkout_args = []
                 if force:
                     checkout_args.append("--force")
@@ -91,12 +92,13 @@ class GitCheckout(Tool):
                 result = repo.git.checkout(*checkout_args)
                 action = "switch_branch" if not create_branch else "create_branch"
 
-            return {
+            return ToolResult(True, {
                 "action": action,
                 "target": target,
                 "paths": paths,
                 "result": result,
                 **status_snapshot(repo),
-            }
+            })
         except Exception as exc:
-            return {"error": str(exc)}
+            error = str(exc)
+            return ToolResult(False, {"error": error}, error)

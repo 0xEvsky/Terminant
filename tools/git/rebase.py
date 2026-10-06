@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo, status_snapshot
 
@@ -6,7 +6,7 @@ from ._common import open_repo, status_snapshot
 class GitRebase(Tool):
     @property
     def name(self):
-        return "git.rebase"
+        return "git_rebase"
 
     @property
     def description(self):
@@ -61,11 +61,12 @@ class GitRebase(Tool):
         rebase_merges = kwargs.get("rebase_merges", False)
 
         if not upstream:
-            return {"error": "upstream is required"}
+            error = "upstream is required"
+            return ToolResult(False, {"error": error}, error)
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             rebase_args = []
@@ -85,12 +86,13 @@ class GitRebase(Tool):
             else:
                 result = repo.git.rebase(*rebase_args)
 
-            return {
+            return ToolResult(True, {
                 "upstream": upstream,
                 "branch": branch,
                 "interactive": interactive,
                 "result": result,
                 **status_snapshot(repo),
-            }
+            })
         except Exception as exc:
-            return {"error": str(exc), **status_snapshot(repo)}
+            error = str(exc)
+            return ToolResult(False, {"error": error, **status_snapshot(repo)}, error)

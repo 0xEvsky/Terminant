@@ -25,6 +25,7 @@ def test_tool_logs_execution(capsys):
     result = tool.execute(path=".")
 
     captured = capsys.readouterr().out
-    assert "[INFO] Executing filesystem.list_files(path='.')" in captured
+    assert "[INFO] Executing filesystem_list_files(path='.')" in captured
     assert "[INFO] Tool returned" in captured
-    assert isinstance(result, list)
+    assert result.success
+    assert isinstance(result.output, list)

@@ -1,14 +1,14 @@
 from datetime import datetime
 from pathlib import Path
 
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 
 class FileInfo(Tool):
     @property
     def name(self):
-        return "filesystem.file_info"
+        return "filesystem_file_info"
 
     @property
     def description(self):
@@ -40,12 +40,12 @@ class FileInfo(Tool):
                 "modified": datetime.fromtimestamp(stats.st_mtime).isoformat(),
             }
             self.log_tool_result(self.name, result)
-            return result
+            return ToolResult(True, result)
         except FileNotFoundError:
             error = f"Error: Path '{path}' not found"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except PermissionError:
             error = f"Error: Permission denied for '{path}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)

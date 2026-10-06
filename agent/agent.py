@@ -5,12 +5,12 @@ from agent.memory import Memory
 from llm.prompts import SYSTEM_PROMPT
 from logger import log_info
 from tools.registry import get_tool
-from tools.base import Tool
-from events.agent_events import ( 
-    AgentEvent, 
-    UserMessageSubmitted, 
+from tools.base import Tool, ToolResult
+from events.agent_events import (
+    AgentEvent,
+    UserMessageSubmitted,
     AgentBusy,
-    AgentIdle, 
+    AgentIdle,
     AssistantMessageFinished,
     ToolStarted,
     ToolFinished )
@@ -54,15 +54,21 @@ class Agent:
         try:
             while True:
                 log_info("Sending messages to model")
-                
+
                 model_response = self.client.chat(messages=self.memory.get_messages())
                 log_info("Model responded")
+
+                if isinstance(model_response, str):
+                    self.memory.add_assistant_message(model_response)
+                    self.event_bus.emit(AssistantMessageFinished(message=model_response))
+                    log_info("Final response generated")
+                    return model_response
 
                 if model_response.tool_calls:
                     self.handle_tool_call(model_response)
                     continue
-                
-                response = model_response.content    
+
+                response = model_response.content
                 self.memory.add_assistant_message(response)
                 self.event_bus.emit(AssistantMessageFinished(message=response))
 
@@ -81,28 +87,29 @@ class Agent:
         tool_call_id = tool_call.id
         tool_name = tool_call.function.name
         arguments = json.loads(tool_call.function.arguments)
-        
+
         self.memory.add_tool_call(id=tool_call_id, name=tool_name, arguments=tool_call.function.arguments)
-        
+
         log_info(f'called tool: {tool_name}')
         log_info(f'arguments: {arguments}')
 
-        result = 'NO RESULT'
+        result = ToolResult(False, error="NO RESULT")
 
-        if tool_name == 'agent.check_mode':
-            result = self.check_agent_mode()
+        if tool_name == 'agent_check_mode':
+            result = ToolResult(True, self.check_agent_mode())
 
         elif self.agent_mode:
             tool = get_tool(tool_name)
             self.event_bus.emit(ToolStarted(tool=tool))
-            
+
             result = tool.execute(**arguments)
             self.event_bus.emit(ToolFinished(tool=tool))
 
-        self.memory.add_tool_result(tool_call_id=tool_call_id, content=json.dumps(result))
+        self.memory.add_tool_result(
+            tool_call_id=tool_call_id,
+            content=json.dumps(result.to_dict()),
+        )
 
 
     def check_agent_mode(self) -> dict:
         return {"agent_mode": self.agent_mode}
-        
-        

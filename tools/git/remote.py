@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo
 
@@ -6,7 +6,7 @@ from ._common import open_repo
 class GitRemote(Tool):
     @property
     def name(self):
-        return "git.remote"
+        return "git_remote"
 
     @property
     def description(self):
@@ -56,7 +56,7 @@ class GitRemote(Tool):
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             if action == "list":
@@ -69,45 +69,53 @@ class GitRemote(Tool):
                             "refs": [ref.name for ref in remote.refs if ref.remote_head != "HEAD"],
                         }
                     )
-                return {"action": action, "remotes": remotes}
+                return ToolResult(True, {"action": action, "remotes": remotes})
 
             if action == "add":
                 if not name or not url:
-                    return {"error": "name and url are required"}
+                    error = "name and url are required"
+                    return ToolResult(False, {"error": error}, error)
                 remote = repo.create_remote(name, url)
-                return {"action": action, "name": remote.name, "url": url}
+                return ToolResult(True, {"action": action, "name": remote.name, "url": url})
 
             if action == "remove":
                 if not name:
-                    return {"error": "name is required"}
+                    error = "name is required"
+                    return ToolResult(False, {"error": error}, error)
                 repo.delete_remote(name)
-                return {"action": action, "name": name}
+                return ToolResult(True, {"action": action, "name": name})
 
             if action == "rename":
                 if not name or not new_name:
-                    return {"error": "name and new_name are required"}
+                    error = "name and new_name are required"
+                    return ToolResult(False, {"error": error}, error)
                 remote = repo.remotes[name]
                 remote.rename(new_name)
-                return {"action": action, "name": name, "new_name": new_name}
+                return ToolResult(True, {"action": action, "name": name, "new_name": new_name})
 
             if action == "set_url":
                 if not name or not url:
-                    return {"error": "name and url are required"}
+                    error = "name and url are required"
+                    return ToolResult(False, {"error": error}, error)
                 repo.git.remote("set-url", name, url)
-                return {"action": action, "name": name, "url": url}
+                return ToolResult(True, {"action": action, "name": name, "url": url})
 
             if action == "get_url":
                 if not name:
-                    return {"error": "name is required"}
+                    error = "name is required"
+                    return ToolResult(False, {"error": error}, error)
                 remote = repo.remotes[name]
-                return {"action": action, "name": name, "urls": list(remote.urls)}
+                return ToolResult(True, {"action": action, "name": name, "urls": list(remote.urls)})
 
             if action == "fetch":
                 if not name:
-                    return {"error": "name is required"}
+                    error = "name is required"
+                    return ToolResult(False, {"error": error}, error)
                 result = repo.git.remote("fetch", name)
-                return {"action": action, "name": name, "result": result}
+                return ToolResult(True, {"action": action, "name": name, "result": result})
 
-            return {"error": f"Unsupported remote action: {action}"}
+            error = f"Unsupported remote action: {action}"
+            return ToolResult(False, {"error": error}, error)
         except Exception as exc:
-            return {"error": str(exc)}
+            error = str(exc)
+            return ToolResult(False, {"error": error}, error)

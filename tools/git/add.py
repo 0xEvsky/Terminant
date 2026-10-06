@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo, status_snapshot
 
@@ -6,7 +6,7 @@ from ._common import open_repo, status_snapshot
 class GitAdd(Tool):
     @property
     def name(self):
-        return "git.add"
+        return "git_add"
 
     @property
     def description(self):
@@ -64,7 +64,7 @@ class GitAdd(Tool):
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             if unstage:
@@ -86,10 +86,11 @@ class GitAdd(Tool):
                 repo.git.add(*add_args)
                 action = "stage"
 
-            return {
+            return ToolResult(True, {
                 "action": action,
                 "paths": paths,
                 **status_snapshot(repo),
-            }
+            })
         except Exception as exc:
-            return {"error": str(exc)}
+            error = str(exc)
+            return ToolResult(False, {"error": error}, error)

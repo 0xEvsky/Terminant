@@ -1,14 +1,14 @@
 import glob
 import os
 
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 
 class SearchFiles(Tool):
     @property
     def name(self):
-        return "filesystem.search_files"
+        return "filesystem_search_files"
 
     @property
     def description(self):
@@ -36,12 +36,12 @@ class SearchFiles(Tool):
         try:
             matches = glob.glob(os.path.join(path, "**", pattern), recursive=True)
             self.log_tool_result(self.name, f"{len(matches)} matches")
-            return matches
+            return ToolResult(True, matches)
         except FileNotFoundError:
             error = f"Error: Path '{path}' not found"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except PermissionError:
             error = f"Error: Permission denied for '{path}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)

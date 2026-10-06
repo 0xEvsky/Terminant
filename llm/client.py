@@ -28,7 +28,7 @@ class LLMClient:
             check_mode_tool = {
                 "type": "function",
                 "function": {
-                    "name": "agent.check_mode",
+                    "name": "agent_check_mode",
                     "description": "Checks if agent mode is enabled or not",
                     "parameters": {
                         "type": "object",

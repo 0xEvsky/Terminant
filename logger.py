@@ -66,6 +66,8 @@ class AppLogger:
 
 
 logger = AppLogger()
+_run_log_file: TextIO | None = None
+_run_log_listener: LogListener | None = None
 
 
 def log_info(message: str) -> None:
@@ -93,3 +95,34 @@ def unsubscribe(listener: LogListener) -> None:
 
 def get_history() -> list[LogRecord]:
     return logger.history()
+
+
+def start_run_logging(log_directory: str | Path = "logs") -> Path:
+    global _run_log_file, _run_log_listener
+
+    stop_run_logging()
+
+    directory = Path(log_directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    log_path = directory / f"run_{timestamp}.log"
+    _run_log_file = log_path.open("a", encoding="utf-8")
+
+    def write_record(record: LogRecord) -> None:
+        if _run_log_file is not None:
+            print(record.format(), file=_run_log_file, flush=True)
+
+    _run_log_listener = write_record
+    subscribe(_run_log_listener)
+    return log_path
+
+
+def stop_run_logging() -> None:
+    global _run_log_file, _run_log_listener
+
+    if _run_log_listener is not None:
+        unsubscribe(_run_log_listener)
+        _run_log_listener = None
+    if _run_log_file is not None:
+        _run_log_file.close()
+        _run_log_file = None

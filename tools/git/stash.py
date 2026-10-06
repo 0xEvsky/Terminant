@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo, status_snapshot
 
@@ -6,7 +6,7 @@ from ._common import open_repo, status_snapshot
 class GitStash(Tool):
     @property
     def name(self):
-        return "git.stash"
+        return "git_stash"
 
     @property
     def description(self):
@@ -49,7 +49,7 @@ class GitStash(Tool):
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             if action == "save":
@@ -70,13 +70,15 @@ class GitStash(Tool):
             elif action == "list":
                 result = repo.git.stash("list")
             else:
-                return {"error": f"Unsupported stash action: {action}"}
+                error = f"Unsupported stash action: {action}"
+                return ToolResult(False, {"error": error}, error)
 
-            return {
+            return ToolResult(True, {
                 "action": action,
                 "stash_ref": stash_ref,
                 "result": result,
                 **status_snapshot(repo),
-            }
+            })
         except Exception as exc:
-            return {"error": str(exc)}
+            error = str(exc)
+            return ToolResult(False, {"error": error}, error)

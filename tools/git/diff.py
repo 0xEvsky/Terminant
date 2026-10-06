@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 from git import Repo
@@ -8,7 +8,7 @@ from git.exc import InvalidGitRepositoryError
 class GitDiff(Tool):
     @property
     def name(self):
-        return "git.diff"
+        return "git_diff"
 
     @property
     def description(self):
@@ -76,7 +76,8 @@ class GitDiff(Tool):
                 stat_args.append("--cached")
             elif mode == "refs":
                 if not left_ref or not right_ref:
-                    return {"error": "left_ref and right_ref are required when mode is refs"}
+                    error = "left_ref and right_ref are required when mode is refs"
+                    return ToolResult(False, {"error": error}, error)
                 diff_args.extend([left_ref, right_ref])
                 name_status_args.extend([left_ref, right_ref])
                 stat_args.extend([left_ref, right_ref])
@@ -104,10 +105,12 @@ class GitDiff(Tool):
             if mode == "working_tree":
                 result["untracked_files"] = repo.untracked_files
 
-            return result
+            return ToolResult(True, result)
         except InvalidGitRepositoryError:
             log_info(f"Not a git repository: {repo_path}")
-            return {"error": f"Not a git repository: {repo_path}"}
+            error = f"Not a git repository: {repo_path}"
+            return ToolResult(False, {"error": error}, error)
         except Exception as e:
             log_info(str(e))
-            return {"error": str(e)}
+            error = str(e)
+            return ToolResult(False, {"error": error}, error)

@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo, status_snapshot
 
@@ -6,7 +6,7 @@ from ._common import open_repo, status_snapshot
 class GitMerge(Tool):
     @property
     def name(self):
-        return "git.merge"
+        return "git_merge"
 
     @property
     def description(self):
@@ -54,11 +54,12 @@ class GitMerge(Tool):
         abort_on_conflict = kwargs.get("abort_on_conflict", False)
 
         if not target:
-            return {"error": "target is required"}
+            error = "target is required"
+            return ToolResult(False, {"error": error}, error)
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             merge_args = []
@@ -69,12 +70,12 @@ class GitMerge(Tool):
             merge_args.append(target)
 
             result = repo.git.merge(*merge_args)
-            return {
+            return ToolResult(True, {
                 "target": target,
                 "result": result,
                 "conflicts": [],
                 **status_snapshot(repo),
-            }
+            })
         except Exception as exc:
             unmerged = []
             try:
@@ -88,9 +89,9 @@ class GitMerge(Tool):
                 except Exception:
                     pass
 
-            return {
+            return ToolResult(False, {
                 "target": target,
                 "error": str(exc),
                 "conflicts": unmerged,
                 **status_snapshot(repo),
-            }
+            }, str(exc))

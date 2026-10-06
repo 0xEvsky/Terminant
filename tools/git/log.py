@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 from git import Repo
@@ -10,7 +10,7 @@ from ._common import diff_path
 class GitLog(Tool):
     @property
     def name(self):
-        return "git.log"
+        return "git_log"
 
     @property
     def description(self):
@@ -108,14 +108,16 @@ class GitLog(Tool):
 
                 history.append(commit_entry)
 
-            return {
+            return ToolResult(True, {
                 "revision": revision,
                 "commit_count": len(history),
                 "history": history,
-            }
+            })
         except InvalidGitRepositoryError:
             log_info(f"Not a git repository: {repo_path}")
-            return {"error": f"Not a git repository: {repo_path}"}
+            error = f"Not a git repository: {repo_path}"
+            return ToolResult(False, {"error": error}, error)
         except Exception as e:
             log_info(str(e))
-            return {"error": str(e)}
+            error = str(e)
+            return ToolResult(False, {"error": error}, error)

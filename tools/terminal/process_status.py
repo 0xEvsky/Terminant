@@ -3,14 +3,14 @@ import os
 import platform
 import subprocess
 
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 
 class ProcessStatus(Tool):
     @property
     def name(self):
-        return "terminal.process_status"
+        return "terminal_process_status"
 
     @property
     def description(self):
@@ -44,7 +44,7 @@ class ProcessStatus(Tool):
                 if not output or "No tasks are running" in output:
                     result = {"pid": process_id, "running": False, "status": "not_found"}
                     self.log_tool_result(self.name, result)
-                    return result
+                    return ToolResult(True, result)
 
                 row = next(csv.reader([output]))
                 result = {
@@ -57,25 +57,25 @@ class ProcessStatus(Tool):
                     "memory_usage": row[4] if len(row) > 4 else None,
                 }
                 self.log_tool_result(self.name, result)
-                return result
+                return ToolResult(True, result)
 
             os.kill(process_id, 0)
             result = {"pid": process_id, "running": True, "status": "running"}
             self.log_tool_result(self.name, result)
-            return result
+            return ToolResult(True, result)
         except ProcessLookupError:
             result = {"pid": pid, "running": False, "status": "not_found"}
             self.log_tool_result(self.name, result)
-            return result
+            return ToolResult(True, result)
         except PermissionError:
             error = f"Error: Permission denied for process '{pid}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except FileNotFoundError:
             error = f"Error: Process '{pid}' not found"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except ValueError:
             error = f"Error: Invalid process id '{pid}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)

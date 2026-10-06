@@ -1,6 +1,6 @@
 # ui/widgets/chat_view.py
-from textual.containers import Container
-from textual.widgets import RichLog
+from textual.widgets import Static
+from rich.markup import escape
 from events.event_bus import EventBus
 from events.agent_events import (
     UserMessageSubmitted,
@@ -20,13 +20,7 @@ class ChatView(AgentWidget):
 
     def compose(self):
         """Yield child widgets."""
-        self.message_display = RichLog(
-            id="message-display",
-            markup=True,
-            highlight=False,
-            wrap=True,
-            auto_scroll=True,
-        )
+        self.message_display = Static(id="message-display", markup=True)
         yield self.message_display
     
     def on_mount(self) -> None:
@@ -37,7 +31,9 @@ class ChatView(AgentWidget):
         self.subscribe(ConversationLoaded, self._on_conversation_loaded)
 
         if self.message_display:
-            self.message_display.write("[b]Terminant[/b]\nType a message below to start the conversation.")
+            self.message_display.update(
+                "[b]Terminant[/b]\nType a message below to start the conversation."
+            )
 
     #handlers
     def _on_user_message(self, event: UserMessageSubmitted) -> None:
@@ -62,13 +58,12 @@ class ChatView(AgentWidget):
         content = ""
         for role, text in self.messages:
             if role == "user":
-                content += f"[b]You:[/b] {text}\n\n"
+                content += f"[on #3a3a3a]> {escape(text)}[/]\n\n"
             else:
-                content += f"[b]Assistant:[/b] {text}\n\n"
+                content += f"[b]• {text}[/b]\n\n"
 
         if not content:
-            content = "[b]Terminant[/b]\nType a message below to start the conversation."
+            content = "Terminant\n\nType a message below to start the conversation."
         
         if self.message_display:
-            self.message_display.clear()
-            self.message_display.write(content)
+            self.message_display.update(content)

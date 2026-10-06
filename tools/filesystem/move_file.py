@@ -1,14 +1,14 @@
 from pathlib import Path
 import shutil
 
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 
 class MoveFile(Tool):
     @property
     def name(self):
-        return "filesystem.move_file"
+        return "filesystem_move_file"
 
     @property
     def description(self):
@@ -37,12 +37,12 @@ class MoveFile(Tool):
             shutil.move(str(Path(source)), str(Path(destination)))
             result = f"File moved from '{source}' to '{destination}' successfully"
             self.log_tool_result(self.name, result)
-            return result
+            return ToolResult(True, result)
         except FileNotFoundError:
             error = f"Error: File '{source}' not found"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)
         except PermissionError:
             error = f"Error: Permission denied for '{source}'"
             self.log_tool_result(self.name, error)
-            return error
+            return ToolResult(False, error, error)

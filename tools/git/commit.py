@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo, status_snapshot
 
@@ -6,7 +6,7 @@ from ._common import open_repo, status_snapshot
 class GitCommit(Tool):
     @property
     def name(self):
-        return "git.commit"
+        return "git_commit"
 
     @property
     def description(self):
@@ -54,11 +54,12 @@ class GitCommit(Tool):
         allow_empty = kwargs.get("allow_empty", False)
 
         if not message:
-            return {"error": "message is required"}
+            error = "message is required"
+            return ToolResult(False, {"error": error}, error)
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             commit_args = ["-m", message]
@@ -72,7 +73,7 @@ class GitCommit(Tool):
             result = repo.git.commit(*commit_args)
             head_commit = repo.head.commit
 
-            return {
+            return ToolResult(True, {
                 "result": result,
                 "commit": {
                     "hash": head_commit.hexsha,
@@ -84,6 +85,7 @@ class GitCommit(Tool):
                     },
                 },
                 **status_snapshot(repo),
-            }
+            })
         except Exception as exc:
-            return {"error": str(exc)}
+            error = str(exc)
+            return ToolResult(False, {"error": error}, error)

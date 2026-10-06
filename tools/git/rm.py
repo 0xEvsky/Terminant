@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo, status_snapshot
 
@@ -6,7 +6,7 @@ from ._common import open_repo, status_snapshot
 class GitRm(Tool):
     @property
     def name(self):
-        return "git.rm"
+        return "git_rm"
 
     @property
     def description(self):
@@ -48,11 +48,12 @@ class GitRm(Tool):
         force = kwargs.get("force", False)
 
         if not paths:
-            return {"error": "paths are required"}
+            error = "paths are required"
+            return ToolResult(False, {"error": error}, error)
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             rm_args = []
@@ -63,11 +64,12 @@ class GitRm(Tool):
             rm_args.extend(["--", *paths])
             repo.git.rm(*rm_args)
 
-            return {
+            return ToolResult(True, {
                 "action": "rm",
                 "cached": cached,
                 "paths": paths,
                 **status_snapshot(repo),
-            }
+            })
         except Exception as exc:
-            return {"error": str(exc)}
+            error = str(exc)
+            return ToolResult(False, {"error": error}, error)

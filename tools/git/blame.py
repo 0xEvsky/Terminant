@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo
 
@@ -51,7 +51,7 @@ def _parse_blame_porcelain(output: str):
 class GitBlame(Tool):
     @property
     def name(self):
-        return "git.blame"
+        return "git_blame"
 
     @property
     def description(self):
@@ -99,11 +99,12 @@ class GitBlame(Tool):
         end_line = kwargs.get("end_line")
 
         if not path:
-            return {"error": "path is required"}
+            error = "path is required"
+            return ToolResult(False, {"error": error}, error)
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             blame_args = ["--line-porcelain"]
@@ -111,10 +112,11 @@ class GitBlame(Tool):
                 blame_args.extend(["-L", f"{start_line},{end_line}"])
             blame_args.extend([revision, "--", path])
             result = repo.git.blame(*blame_args)
-            return {
+            return ToolResult(True, {
                 "path": path,
                 "revision": revision,
                 "entries": _parse_blame_porcelain(result),
-            }
+            })
         except Exception as exc:
-            return {"error": str(exc)}
+            error = str(exc)
+            return ToolResult(False, {"error": error}, error)

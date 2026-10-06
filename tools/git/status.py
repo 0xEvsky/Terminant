@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 from logger import log_info
 
 from git import Repo
@@ -7,7 +7,7 @@ from git.exc import InvalidGitRepositoryError
 class GitStatus(Tool):
     @property
     def name(self):
-        return "git.status"
+        return "git_status"
     
     @property
     def description(self):
@@ -29,7 +29,7 @@ class GitStatus(Tool):
         try:
             repo = Repo(repo_path)
             
-            return {
+            return ToolResult(True, {
                 "branch": repo.active_branch.name,
                 "is_dirty": repo.is_dirty(),
                 "staged_files": [item[0] for item in repo.index.diff("HEAD")],
@@ -41,10 +41,12 @@ class GitStatus(Tool):
                     "message": repo.head.commit.message.strip(),
                     "author": str(repo.head.commit.author),
                 }
-            }
+            })
         except InvalidGitRepositoryError:
             log_info(f"Not a git repository: {repo_path}")
-            return {"error": f"Not a git repository: {repo_path}"}
+            error = f"Not a git repository: {repo_path}"
+            return ToolResult(False, {"error": error}, error)
         except Exception as e:
             log_info(str(e))
-            return {"error": str(e)}
+            error = str(e)
+            return ToolResult(False, {"error": error}, error)

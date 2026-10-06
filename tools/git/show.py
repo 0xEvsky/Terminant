@@ -1,4 +1,4 @@
-from tools.base import Tool
+from tools.base import Tool, ToolResult
 
 from ._common import open_repo
 
@@ -6,7 +6,7 @@ from ._common import open_repo
 class GitShow(Tool):
     @property
     def name(self):
-        return "git.show"
+        return "git_show"
 
     @property
     def description(self):
@@ -47,11 +47,12 @@ class GitShow(Tool):
         stat = kwargs.get("stat", True)
 
         if not revision:
-            return {"error": "revision is required"}
+            error = "revision is required"
+            return ToolResult(False, {"error": error}, error)
 
         repo, error = open_repo(repo_path)
         if error:
-            return error
+            return ToolResult(False, error, error)
 
         try:
             show_args = [revision]
@@ -62,7 +63,7 @@ class GitShow(Tool):
 
             result = repo.git.show(*show_args)
             commit = repo.commit(revision)
-            return {
+            return ToolResult(True, {
                 "revision": revision,
                 "path": path,
                 "result": result,
@@ -77,6 +78,7 @@ class GitShow(Tool):
                     "authored_date": commit.authored_datetime.isoformat(),
                     "committed_date": commit.committed_datetime.isoformat(),
                 },
-            }
+            })
         except Exception as exc:
-            return {"error": str(exc)}
+            error = str(exc)
+            return ToolResult(False, {"error": error}, error)
