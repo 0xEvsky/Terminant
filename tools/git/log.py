@@ -27,9 +27,9 @@ class GitLog(Tool):
             },
             "revision": {
                 "type": "string",
-                "description": "revision or branch to inspect (default: HEAD)",
+                "description": "revision or branch to inspect (default: --all)",
                 "required": False,
-                "default": "HEAD"
+                "default": "--all"
             },
             "max_count": {
                 "type": "integer",
@@ -53,7 +53,7 @@ class GitLog(Tool):
 
     def execute(self, **kwargs):
         repo_path = kwargs.get("repo_path", ".")
-        revision = kwargs.get("revision", "HEAD")
+        revision = kwargs.get("revision", self.arguments["revision"]["default"])
         max_count = kwargs.get("max_count", 10)
         include_file_stats = kwargs.get("include_file_stats", True)
         include_diffs = kwargs.get("include_diffs", True)

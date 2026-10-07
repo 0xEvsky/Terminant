@@ -28,9 +28,9 @@ class GitCommit(Tool):
             },
             "all": {
                 "type": "boolean",
-                "description": "stage tracked changes before committing",
+                "description": "stage tracked changes before committing (default: true)",
                 "required": False,
-                "default": False,
+                "default": True,
             },
             "amend": {
                 "type": "boolean",
@@ -49,7 +49,7 @@ class GitCommit(Tool):
     def execute(self, **kwargs):
         repo_path = kwargs.get("repo_path", ".")
         message = kwargs.get("message")
-        all_files = kwargs.get("all", False)
+        all_files = kwargs.get("all", self.arguments["all"]["default"])
         amend = kwargs.get("amend", False)
         allow_empty = kwargs.get("allow_empty", False)
 
