@@ -28,6 +28,19 @@ class Tool:
     def execute(self, **kwargs) -> ToolResult:
         ...
 
+    def validate_arguments(self, arguments: dict) -> bool:
+        required_args = set(self.arguments.keys())
+        provided_args = set(arguments.keys())
+        missing_args = required_args - provided_args
+        if missing_args:
+            raise ValueError(f"Missing required arguments: {', '.join(missing_args)}")
+
+        unexpected_args = provided_args - required_args
+        if unexpected_args:
+            raise ValueError(f"Unexpected arguments: {', '.join(unexpected_args)}") 
+
+        return True
+
     def to_openai_schema(self):
         return {
             "type": "function",
