@@ -2,6 +2,9 @@ from tools.filesystem import create_directory, copy_file, delete_file, file_info
 from tools.git import add, blame, branch, checkout, commit, diff, log, merge, rebase, remote, rm, show, stash, status, tag
 from tools.terminal import environment, execute, process_status, which
 
+class ToolNotFoundError(LookupError):
+    pass
+
 tool_registry = {
     "filesystem_list_files": list_files.ListFiles(),
     "filesystem_read_file": read_file.ReadFile(),

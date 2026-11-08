@@ -7,6 +7,12 @@ class AgentEvent:
     ...
 
 @dataclass
+class ErrorEvent(AgentEvent):
+    """Base class for error events."""
+    ...
+    error: str
+
+@dataclass
 class StreamingToken(AgentEvent):
     token: str
 
@@ -39,9 +45,13 @@ class AgentBusy(AgentEvent):
     pass
 
 @dataclass
-class AgentError(AgentEvent):
-    error: str
-
-@dataclass
 class ConversationLoaded(AgentEvent):
     messages: list
+
+@dataclass
+class ToolCallFailed(ErrorEvent):
+    tool_name: str
+
+@dataclass
+class APICallFailed(ErrorEvent):
+    pass
