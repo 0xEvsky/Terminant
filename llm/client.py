@@ -13,7 +13,7 @@ class LLMClient:
             raise ValueError("no messages has been provided")
 
         if not self.api_key:
-            return "Model client not configured: set OPENROUTER_API_KEY to enable API calls."
+            raise ValueError("API key is not set. Please provide a valid API key.")
 
         response = self._call_api(messages)
         return response
