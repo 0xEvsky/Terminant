@@ -1,9 +1,10 @@
 import inspect
-import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, TextIO
+
+from rich.text import Text
 
 
 @dataclass(frozen=True)
@@ -13,8 +14,25 @@ class LogRecord:
     message: str
     caller: str
 
-    def format(self) -> str:
-        return f"[{self.timestamp}] [{self.level}] [{self.caller}] {self.message}"
+    def format(self, color: bool = False) -> str:
+        prefix = f"[{self.timestamp}] "
+        level = f"[{self.level}]"
+        if color and self.level == "ERROR":
+            return (
+                f"{prefix}\033[31m{level}\033[0m "
+                f"[{self.caller}] \033[31m{self.message}\033[0m"
+            )
+        return f"{prefix}{level} [{self.caller}] {self.message}"
+
+    def to_rich_text(self) -> Text:
+        text = Text(f"[{self.timestamp}] ")
+        if self.level == "ERROR":
+            text.append(f"[{self.level}]", style="red")
+            text.append(f" [{self.caller}] ")
+            text.append(self.message, style="red")
+        else:
+            text.append(f"[{self.level}] [{self.caller}] {self.message}")
+        return text
 
 
 LogListener = Callable[[LogRecord], None]
@@ -37,7 +55,27 @@ class AppLogger:
         )
         self._history.append(record)
         if self.stream is not None:
-            print(record.format(), file=self.stream)
+            print(record.format(color=True), file=self.stream)
+
+        for listener in list(self._listeners):
+            listener(record)
+
+    def error(
+        self,
+        message: str | BaseException,
+        caller: str | None = None,
+    ) -> None:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        caller_text = caller or self._resolve_caller()
+        record = LogRecord(
+            timestamp=timestamp,
+            level="ERROR",
+            message=str(message),
+            caller=caller_text,
+        )
+        self._history.append(record)
+        if self.stream is not None:
+            print(record.format(color=True), file=self.stream)
 
         for listener in list(self._listeners):
             listener(record)
@@ -79,6 +117,17 @@ def log_info(message: str) -> None:
         caller = f"{filename}:{caller_frame.f_lineno} {caller_frame.f_code.co_name}"
 
     logger.info(message, caller=caller)
+
+
+def log_error(message: str | BaseException) -> None:
+    frame = inspect.currentframe()
+    caller = None
+    if frame is not None and frame.f_back is not None:
+        caller_frame = frame.f_back
+        filename = Path(caller_frame.f_code.co_filename).name
+        caller = f"{filename}:{caller_frame.f_lineno} {caller_frame.f_code.co_name}"
+
+    logger.error(message, caller=caller)
 
 
 def set_stream(stream: TextIO | None) -> None:
