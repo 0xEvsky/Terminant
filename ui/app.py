@@ -28,7 +28,7 @@ from events.agent_events import (
     AgentIdle,
     AgentBusy,
     ToolStarted,
-    ToolFinished,
+    ToolCallSucceeded,
     ToolCallFailed,
     APICallFailed,
     ErrorEvent,
@@ -202,7 +202,7 @@ class TerminantApp(App):
         self.event_bus.subscribe(AgentBusy, self._on_agent_busy)
         self.event_bus.subscribe(ConversationLoaded, self._on_conversation_loaded)
         self.event_bus.subscribe(ToolStarted, self._on_tool_started)
-        self.event_bus.subscribe(ToolFinished, self._on_tool_finished)
+        self.event_bus.subscribe(ToolCallSucceeded, self._on_tool_succeeded)
         self.event_bus.subscribe(ToolCallFailed, self._on_tool_failed)
         self.event_bus.subscribe(APICallFailed, self._on_api_failed)
         self.event_bus.subscribe(ErrorEvent, self._on_error)
@@ -341,10 +341,10 @@ class TerminantApp(App):
         tool_name = getattr(event.tool, 'name', 'Unknown')
         self.call_from_thread(self._add_tool_message, f"🔧 Tool started: {tool_name}")
 
-    def _on_tool_finished(self, event: ToolFinished) -> None:
-        """Handle tool finished event."""
+    def _on_tool_succeeded(self, event: ToolCallSucceeded) -> None:
+        """Handle tool succeeded event."""
         tool_name = getattr(event.tool, 'name', 'Unknown')
-        self.call_from_thread(self._add_tool_message, f"✓ Tool finished: {tool_name}")
+        self.call_from_thread(self._add_tool_message, f"✓ Tool succeeded: {tool_name}")
 
     def _on_tool_failed(self, event: ToolCallFailed) -> None:
         """Handle tool failed event."""

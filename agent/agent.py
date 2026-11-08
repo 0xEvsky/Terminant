@@ -15,7 +15,7 @@ from events.agent_events import (
     AgentIdle,
     AssistantMessageFinished,
     ToolStarted,
-    ToolFinished )
+    ToolCallSucceeded )
 from events.event_bus import EventBus
 
 
@@ -98,10 +98,12 @@ class Agent:
 
         try:
             arguments = json.loads(tool_call.function.arguments)
-            
         except json.JSONDecodeError as e:
             log_error(f"Invalid JSON in tool call arguments: {e}")
-            self.emit(ToolCallFailed(tool_name=tool_name, error=f"Invalid JSON in tool call arguments: {e}"))
+            result = ToolResult(False, output="", error=f"Invalid JSON in tool call arguments: {e}")
+            self._emit_tool_result_event(tool_name, result)
+            self.memory.add_tool_call(id=tool_call_id, name=tool_name, arguments=tool_call.function.arguments)
+            self.memory.add_tool_result(tool_call_id=tool_call_id, content=json.dumps(result.to_dict()))
             return
 
         self.memory.add_tool_call(id=tool_call_id, name=tool_name, arguments=tool_call.function.arguments)
@@ -116,36 +118,42 @@ class Agent:
 
         elif self.agent_mode:
             try:
-                tool:Tool = get_tool(tool_name)
+                tool: Tool = get_tool(tool_name)
                 if not tool:
                     raise ToolNotFoundError(f"Tool '{tool_name}' not found in registry")
-                tool.validate_arguments(arguments) # raises ValueError if arguments are invalid
+                tool.validate_arguments(arguments)
                 self.emit(ToolStarted(tool=tool))
                 result = tool.execute(**arguments)
-                self.emit(ToolFinished(tool=tool))
 
             except ToolNotFoundError as e:
                 log_error(e)
                 result = ToolResult(False, output=str(e), error=str(e))
-                self.emit(ToolCallFailed(tool_name=tool_name, error=str(e)))
 
             except Exception as e:
                 log_error(e)
-                result = ToolResult(
-                    False, 
-                    output=f"Tool execution failed: {str(e)}", 
-                    error=str(e))
-                self.emit(ToolCallFailed(tool_name=tool_name, error=str(e)))
+                result = ToolResult(False, output=f"Tool execution failed: {str(e)}", error=str(e))
 
         else:
-            result.output = ""
-            result.error = "Agent mode is disabled"
-            self.emit(ToolCallFailed(tool_name=tool_name, error="Agent mode is disabled"))
+            result = ToolResult(False, output="", error="Agent mode is disabled")
 
+        # Centralized event emission based on result
+        self._emit_tool_result_event(tool_name, result)
         self.memory.add_tool_result(
             tool_call_id=tool_call_id,
             content=json.dumps(result.to_dict()),
         )
+
+    def _emit_tool_result_event(self, tool_name: str, result: ToolResult) -> None:
+        """Emit the appropriate tool result event based on execution result."""
+        if result.success:
+            tool = get_tool(tool_name)
+            if tool:
+                self.emit(ToolCallSucceeded(tool=tool))
+            else:
+                log_error(f"Tool '{tool_name}' succeeded but not found in registry")
+                self.emit(ToolCallFailed(tool_name=tool_name, error="Tool not found in registry"))
+        else:
+            self.emit(ToolCallFailed(tool_name=tool_name, error=result.error))
 
     def check_agent_mode(self) -> dict:
         return ToolResult(True, output={"agent_mode": self.agent_mode})

@@ -33,7 +33,7 @@ class ToolStarted(AgentEvent):
     tool: Tool
 
 @dataclass
-class ToolFinished(AgentEvent):
+class ToolCallSucceeded(AgentEvent):
     tool: Tool
 
 
