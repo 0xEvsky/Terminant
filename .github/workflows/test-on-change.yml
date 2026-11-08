@@ -1,0 +1,149 @@
+name: Test on Change
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run Relevant Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Install package in editable mode
+        run: |
+          pip install -e .
+
+      - name: Get changed files
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # For PRs, compare with base branch
+            git diff --name-only ${{ github.base_ref }}..${{ github.head_ref }} > changed_files.txt
+          else
+            # For pushes, compare with previous commit
+            git diff --name-only HEAD^..HEAD > changed_files.txt
+          fi
+          cat changed_files.txt
+
+      - name: Determine test suite
+        id: test-suite
+        run: |
+          # Read changed files
+          if [ -f changed_files.txt ]; then
+            CHANGED_FILES=$(cat changed_files.txt)
+          else
+            CHANGED_FILES=""
+          fi
+
+          # Build pytest command based on changed files
+          PYTEST_ARGS="tests/ -v --tb=short"
+
+          # Track which test files to run
+          TEST_FILES=""
+
+          for file in $CHANGED_FILES; do
+            case "$file" in
+              agent/*)
+                TEST_FILES="$TEST_FILES tests/test_agent_events.py"
+                ;;
+              events/*)
+                TEST_FILES="$TEST_FILES tests/test_agent_events.py"
+                ;;
+              ui/*)
+                TEST_FILES="$TEST_FILES tests/test_agent_events.py"
+                ;;
+              llm/*)
+                TEST_FILES="$TEST_FILES tests/test_agent_events.py"
+                ;;
+              tools/filesystem/*)
+                TEST_FILES="$TEST_FILES tests/test_filesystem_tools.py"
+                ;;
+              tools/terminal/*)
+                TEST_FILES="$TEST_FILES tests/test_terminal_tools.py"
+                ;;
+              tools/git/*)
+                TEST_FILES="$TEST_FILES tests/test_git_tools.py"
+                ;;
+              tools/registry*)
+                TEST_FILES="$TEST_FILES tests/test_agent_events.py tests/test_filesystem_tools.py tests/test_terminal_tools.py tests/test_git_tools.py"
+                ;;
+              config/*)
+                # Config changes might affect multiple areas
+                TEST_FILES="$TEST_FILES tests/test_agent_events.py"
+                ;;
+              logger.py)
+                TEST_FILES="$TEST_FILES tests/test_logging.py"
+                ;;
+              main.py)
+                # Main entry point - run all tests
+                TEST_FILES="tests/"
+                ;;
+              tests/test_agent_events.py)
+                TEST_FILES="$TEST_FILES tests/test_agent_events.py"
+                ;;
+              tests/test_filesystem_tools.py)
+                TEST_FILES="$TEST_FILES tests/test_filesystem_tools.py"
+                ;;
+              tests/test_terminal_tools.py)
+                TEST_FILES="$TEST_FILES tests/test_terminal_tools.py"
+                ;;
+              tests/test_git_tools.py)
+                TEST_FILES="$TEST_FILES tests/test_git_tools.py"
+                ;;
+              tests/test_logging.py)
+                TEST_FILES="$TEST_FILES tests/test_logging.py"
+                ;;
+            esac
+          done
+
+          # Deduplicate test files
+          TEST_FILES=$(echo $TEST_FILES | tr ' ' '\n' | sort -u | tr '\n' ' ')
+
+          # If no specific tests triggered but there are changes, run all tests
+          if [ -z "$TEST_FILES" ] && [ -n "$CHANGED_FILES" ]; then
+            TEST_FILES="tests/"
+          fi
+
+          # If no changes at all (shouldn't happen in CI), run all tests
+          if [ -z "$TEST_FILES" ]; then
+            TEST_FILES="tests/"
+          fi
+
+          echo "test-files=$TEST_FILES" >> $GITHUB_OUTPUT
+          echo "Selected test files: $TEST_FILES"
+
+      - name: Run selected tests
+        run: |
+          pytest ${{ steps.test-suite.outputs.test-files }} -v --tb=short --cov=./ --cov-report=term-missing
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false

@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "terminant"
+version = "0.1.0"
+description = "AI terminal assistant with Textual TUI"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=3.24.0",
+    "textual>=8.2.8",
+    "GitPython>=3.2.0",
+    "rich>=15.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agent*", "config*", "events*", "llm*", "tools*", "ui*"]
+
+[tool.setuptools]
+py-modules = ["logger"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["."]
+omit = ["tests/*", ".venv/*", "__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

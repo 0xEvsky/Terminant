@@ -1,0 +1,354 @@
+name: Smart Test Selection
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  detect-changes:
+    name: Detect Changed Files
+    runs-on: ubuntu-latest
+    outputs:
+      test-files: ${{ steps.filter.outputs.test-files }}
+      test-agent: ${{ steps.filter.outputs.test-agent }}
+      test-filesystem: ${{ steps.filter.outputs.test-filesystem }}
+      test-terminal: ${{ steps.filter.outputs.test-terminal }}
+      test-git: ${{ steps.filter.outputs.test-git }}
+      test-logging: ${{ steps.filter.outputs.test-logging }}
+      test-events: ${{ steps.filter.outputs.test-events }}
+      test-ui: ${{ steps.filter.outputs.test-ui }}
+      test-llm: ${{ steps.filter.outputs.test-llm }}
+      test-tools: ${{ steps.filter.outputs.test-tools }}
+      test-config: ${{ steps.filter.outputs.test-config }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # For PRs, compare with base branch
+            git diff --name-only ${{ github.base_ref }}..${{ github.head_ref }} > changed_files.txt
+          else
+            # For pushes, compare with previous commit
+            git diff --name-only HEAD^..HEAD > changed_files.txt
+          fi
+          cat changed_files.txt
+
+      - name: Determine test targets
+        id: filter
+        run: |
+          # Read changed files
+          if [ -f changed_files.txt ]; then
+            CHANGED_FILES=$(cat changed_files.txt)
+          else
+            CHANGED_FILES=""
+          fi
+
+          # Initialize test flags
+          TEST_AGENT="false"
+          TEST_FILESYSTEM="false"
+          TEST_TERMINAL="false"
+          TEST_GIT="false"
+          TEST_LOGGING="false"
+          TEST_EVENTS="false"
+          TEST_UI="false"
+          TEST_LLM="false"
+          TEST_TOOLS="false"
+          TEST_CONFIG="false"
+
+          # Check each changed file and set test flags
+          for file in $CHANGED_FILES; do
+            case "$file" in
+              agent/*)
+                TEST_AGENT="true"
+                TEST_EVENTS="true"
+                ;;
+              events/*)
+                TEST_EVENTS="true"
+                TEST_AGENT="true"
+                ;;
+              ui/*)
+                TEST_UI="true"
+                TEST_EVENTS="true"
+                ;;
+              llm/*)
+                TEST_LLM="true"
+                TEST_AGENT="true"
+                ;;
+              tools/filesystem/*)
+                TEST_FILESYSTEM="true"
+                TEST_TOOLS="true"
+                ;;
+              tools/terminal/*)
+                TEST_TERMINAL="true"
+                TEST_TOOLS="true"
+                ;;
+              tools/git/*)
+                TEST_GIT="true"
+                TEST_TOOLS="true"
+                ;;
+              tools/registry*)
+                TEST_TOOLS="true"
+                TEST_AGENT="true"
+                ;;
+              config/*)
+                TEST_CONFIG="true"
+                ;;
+              logger.py)
+                TEST_LOGGING="true"
+                ;;
+              main.py)
+                # Main entry point - run all tests
+                TEST_AGENT="true"
+                TEST_FILESYSTEM="true"
+                TEST_TERMINAL="true"
+                TEST_GIT="true"
+                TEST_LOGGING="true"
+                TEST_EVENTS="true"
+                TEST_UI="true"
+                TEST_LLM="true"
+                TEST_TOOLS="true"
+                TEST_CONFIG="true"
+                ;;
+              tests/test_agent_events.py)
+                TEST_EVENTS="true"
+                TEST_AGENT="true"
+                ;;
+              tests/test_filesystem_tools.py)
+                TEST_FILESYSTEM="true"
+                ;;
+              tests/test_terminal_tools.py)
+                TEST_TERMINAL="true"
+                ;;
+              tests/test_git_tools.py)
+                TEST_GIT="true"
+                ;;
+              tests/test_logging.py)
+                TEST_LOGGING="true"
+                ;;
+            esac
+          done
+
+          # If no specific tests triggered but there are changes, run all tests
+          if [ "$TEST_AGENT" = "false" ] && [ "$TEST_FILESYSTEM" = "false" ] && \
+             [ "$TEST_TERMINAL" = "false" ] && [ "$TEST_GIT" = "false" ] && \
+             [ "$TEST_LOGGING" = "false" ] && [ "$TEST_EVENTS" = "false" ] && \
+             [ "$TEST_UI" = "false" ] && [ "$TEST_LLM" = "false" ] && \
+             [ "$TEST_TOOLS" = "false" ] && [ "$TEST_CONFIG" = "false" ] && \
+             [ -n "$CHANGED_FILES" ]; then
+            TEST_AGENT="true"
+            TEST_FILESYSTEM="true"
+            TEST_TERMINAL="true"
+            TEST_GIT="true"
+            TEST_LOGGING="true"
+            TEST_EVENTS="true"
+            TEST_UI="true"
+            TEST_LLM="true"
+            TEST_TOOLS="true"
+            TEST_CONFIG="true"
+          fi
+
+          echo "test-agent=$TEST_AGENT" >> $GITHUB_OUTPUT
+          echo "test-filesystem=$TEST_FILESYSTEM" >> $GITHUB_OUTPUT
+          echo "test-terminal=$TEST_TERMINAL" >> $GITHUB_OUTPUT
+          echo "test-git=$TEST_GIT" >> $GITHUB_OUTPUT
+          echo "test-logging=$TEST_LOGGING" >> $GITHUB_OUTPUT
+          echo "test-events=$TEST_EVENTS" >> $GITHUB_OUTPUT
+          echo "test-ui=$TEST_UI" >> $GITHUB_OUTPUT
+          echo "test-llm=$TEST_LLM" >> $GITHUB_OUTPUT
+          echo "test-tools=$TEST_TOOLS" >> $GITHUB_OUTPUT
+          echo "test-config=$TEST_CONFIG" >> $GITHUB_OUTPUT
+
+          echo "Test selection:"
+          echo "  Agent: $TEST_AGENT"
+          echo "  Filesystem: $TEST_FILESYSTEM"
+          echo "  Terminal: $TEST_TERMINAL"
+          echo "  Git: $TEST_GIT"
+          echo "  Logging: $TEST_LOGGING"
+          echo "  Events: $TEST_EVENTS"
+          echo "  UI: $TEST_UI"
+          echo "  LLM: $TEST_LLM"
+          echo "  Tools: $TEST_TOOLS"
+          echo "  Config: $TEST_CONFIG"
+
+  test-agent:
+    name: Test Agent & Events
+    needs: detect-changes
+    if: needs.detect-changes.outputs.test-agent == 'true' || needs.detect-changes.outputs.test-events == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Install package in editable mode
+        run: |
+          pip install -e .
+
+      - name: Run Agent tests
+        run: |
+          pytest tests/test_agent_events.py -v --tb=short
+
+      - name: Run Events tests
+        if: needs.detect-changes.outputs.test-events == 'true'
+        run: |
+          pytest tests/test_agent_events.py::TestEventBus -v --tb=short
+
+  test-filesystem:
+    name: Test Filesystem Tools
+    needs: detect-changes
+    if: needs.detect-changes.outputs.test-filesystem == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Install package in editable mode
+        run: |
+          pip install -e .
+
+      - name: Run Filesystem tests
+        run: |
+          pytest tests/test_filesystem_tools.py -v --tb=short
+
+  test-terminal:
+    name: Test Terminal Tools
+    needs: detect-changes
+    if: needs.detect-changes.outputs.test-terminal == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Install package in editable mode
+        run: |
+          pip install -e .
+
+      - name: Run Terminal tests
+        run: |
+          pytest tests/test_terminal_tools.py -v --tb=short
+
+  test-git:
+    name: Test Git Tools
+    needs: detect-changes
+    if: needs.detect-changes.outputs.test-git == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Install package in editable mode
+        run: |
+          pip install -e .
+
+      - name: Run Git tests
+        run: |
+          pytest tests/test_git_tools.py -v --tb=short
+
+  test-logging:
+    name: Test Logging
+    needs: detect-changes
+    if: needs.detect-changes.outputs.test-logging == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Install package in editable mode
+        run: |
+          pip install -e .
+
+      - name: Run Logging tests
+        run: |
+          pytest tests/test_logging.py -v --tb=short
+
+  test-all:
+    name: Run All Tests (fallback)
+    needs: detect-changes
+    if: always() && (needs.detect-changes.outputs.test-agent == 'true' || needs.detect-changes.outputs.test-filesystem == 'true' || needs.detect-changes.outputs.test-terminal == 'true' || needs.detect-changes.outputs.test-git == 'true' || needs.detect-changes.outputs.test-logging == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Install package in editable mode
+        run: |
+          pip install -e .
+
+      - name: Run all tests
+        if: always()
+        run: |
+          pytest tests/ -v --tb=short
