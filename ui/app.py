@@ -338,7 +338,7 @@ class TerminantApp(App):
 
     def _on_tool_started(self, event: ToolStarted) -> None:
         """Handle tool started event."""
-        tool_name = getattr(event.tool, 'name', 'Unknown')
+        tool_name = event.tool_name
         self.call_from_thread(self._add_tool_message, f"🔧 Tool started: {tool_name}")
 
     def _on_tool_succeeded(self, event: ToolCallSucceeded) -> None:
