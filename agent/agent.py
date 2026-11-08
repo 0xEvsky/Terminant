@@ -122,19 +122,19 @@ class Agent:
                 if not tool:
                     raise ToolNotFoundError(f"Tool '{tool_name}' not found in registry")
                 tool.validate_arguments(arguments)
-                self.emit(ToolStarted(tool=tool))
+                self.emit(ToolStarted(tool_name=tool_name))
                 result = tool.execute(**arguments)
 
             except ToolNotFoundError as e:
                 log_error(e)
-                result = ToolResult(False, output=str(e), error=str(e))
+                result = ToolResult(False, error=str(e))
 
             except Exception as e:
                 log_error(e)
-                result = ToolResult(False, output=f"Tool execution failed: {str(e)}", error=str(e))
+                result = ToolResult(False, error=str(e))
 
         else:
-            result = ToolResult(False, output="", error="Agent mode is disabled")
+            result = ToolResult(False, error="Agent mode is disabled")
 
         # Centralized event emission based on result
         self._emit_tool_result_event(tool_name, result)

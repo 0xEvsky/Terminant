@@ -30,7 +30,7 @@ class AssistantMessageFinished(AgentEvent):
 
 @dataclass
 class ToolStarted(AgentEvent):
-    tool: Tool
+    tool_name: str
 
 @dataclass
 class ToolCallSucceeded(AgentEvent):
