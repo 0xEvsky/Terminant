@@ -1,5 +1,5 @@
 from tools.base import Tool, ToolResult
-from logger import log_info
+from logger import log_error
 
 from git import Repo
 from git.exc import InvalidGitRepositoryError
@@ -114,10 +114,10 @@ class GitLog(Tool):
                 "history": history,
             })
         except InvalidGitRepositoryError:
-            log_info(f"Not a git repository: {repo_path}")
+            log_error(f"Not a git repository: {repo_path}")
             error = f"Not a git repository: {repo_path}"
             return ToolResult(False, {"error": error}, error)
         except Exception as e:
-            log_info(str(e))
+            log_error(e)
             error = str(e)
             return ToolResult(False, {"error": error}, error)

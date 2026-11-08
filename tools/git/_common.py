@@ -1,4 +1,4 @@
-from logger import log_info
+from logger import log_error
 
 from git import Repo
 from git.exc import InvalidGitRepositoryError
@@ -8,10 +8,10 @@ def open_repo(repo_path: str):
     try:
         return Repo(repo_path), None
     except InvalidGitRepositoryError:
-        log_info(f"Not a git repository: {repo_path}")
+        log_error(f"Not a git repository: {repo_path}")
         return None, {"error": f"Not a git repository: {repo_path}"}
     except Exception as exc:
-        log_info(str(exc))
+        log_error(exc)
         return None, {"error": str(exc)}
 
 
