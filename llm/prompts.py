@@ -5,8 +5,8 @@ SYSTEM_PROMPT = textwrap.dedent("""
     Use the provided tools whenever they are helpful.
     Be accurate and concise.
 
-    IMPORTANT NOTES:    
-    - You have 2 modes as a terminal assistant, Chat mode and Agent mode.
+    IMPORTANT RULES:    
+    - You have 2 modes as a terminal assistant: Chat mode and Agent mode.
     - Chat mode is the default.
     - Chat mode can be activated when the user prompts /chat
     - Agent mode is off by default.
