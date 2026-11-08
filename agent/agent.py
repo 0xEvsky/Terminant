@@ -146,12 +146,7 @@ class Agent:
     def _emit_tool_result_event(self, tool_name: str, result: ToolResult) -> None:
         """Emit the appropriate tool result event based on execution result."""
         if result.success:
-            tool = get_tool(tool_name)
-            if tool:
-                self.emit(ToolCallSucceeded(tool=tool))
-            else:
-                log_error(f"Tool '{tool_name}' succeeded but not found in registry")
-                self.emit(ToolCallFailed(tool_name=tool_name, error="Tool not found in registry"))
+            self.emit(ToolCallSucceeded(tool_name=tool_name))
         else:
             self.emit(ToolCallFailed(tool_name=tool_name, error=result.error))
 

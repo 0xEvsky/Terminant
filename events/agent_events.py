@@ -34,7 +34,7 @@ class ToolStarted(AgentEvent):
 
 @dataclass
 class ToolCallSucceeded(AgentEvent):
-    tool: Tool
+    tool_name: str
 
 
 class AgentIdle(AgentEvent):

@@ -343,7 +343,7 @@ class TerminantApp(App):
 
     def _on_tool_succeeded(self, event: ToolCallSucceeded) -> None:
         """Handle tool succeeded event."""
-        tool_name = getattr(event.tool, 'name', 'Unknown')
+        tool_name = event.tool_name
         self.call_from_thread(self._add_tool_message, f"✓ Tool succeeded: {tool_name}")
 
     def _on_tool_failed(self, event: ToolCallFailed) -> None:
