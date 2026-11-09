@@ -96,52 +96,48 @@ class Agent:
         tool_call_id = tool_call.id
         tool_name = tool_call.function.name
 
+        self.memory.add_tool_call(id=tool_call_id, name=tool_name, arguments=tool_call.function.arguments)
+
         try:
             arguments = json.loads(tool_call.function.arguments)
         except json.JSONDecodeError as e:
             log_error(f"Invalid JSON in tool call arguments: {e}")
-            result = ToolResult(False, output="", error=f"Invalid JSON in tool call arguments: {e}")
-            self._emit_tool_result_event(tool_name, result)
-            self.memory.add_tool_call(id=tool_call_id, name=tool_name, arguments=tool_call.function.arguments)
-            self.memory.add_tool_result(tool_call_id=tool_call_id, content=json.dumps(result.to_dict()))
-            return
-
-        self.memory.add_tool_call(id=tool_call_id, name=tool_name, arguments=tool_call.function.arguments)
-
-        log_info(f'called tool: {tool_name}')
-        log_info(f'arguments: {arguments}')
-
-        result = ToolResult(False, output="", error="Tool execution failed")
-
-        if tool_name == 'agent_check_mode':
-            result = self.check_agent_mode()
-
-        elif self.agent_mode:
-            try:
-                tool: Tool = get_tool(tool_name)
-                if not tool:
-                    raise ToolNotFoundError(f"Tool '{tool_name}' not found in registry")
-                tool.validate_arguments(arguments)
-                self.emit(ToolStarted(tool_name=tool_name))
-                result = tool.execute(**arguments)
-
-            except ToolNotFoundError as e:
-                log_error(e)
-                result = ToolResult(False, error=str(e))
-
-            except Exception as e:
-                log_error(e)
-                result = ToolResult(False, error=str(e))
-
+            result = ToolResult(False, error=f"Invalid JSON in tool call arguments: {e}")
         else:
-            result = ToolResult(False, error="Agent mode is disabled")
+            log_info(f'called tool: {tool_name}')
+            log_info(f'arguments: {arguments}')
 
+            if tool_name == 'agent_check_mode':
+                result = self.check_agent_mode()
+            elif not self.agent_mode:
+                result = ToolResult(False, error="Agent mode is disabled")
+            else:
+                result = self._execute_tool(tool_name, arguments)
+                
         # Centralized event emission based on result
         self._emit_tool_result_event(tool_name, result)
         self.memory.add_tool_result(
             tool_call_id=tool_call_id,
             content=json.dumps(result.to_dict()),
         )
+
+    def _execute_tool(self, tool_name: str, arguments: dict) -> ToolResult:
+        """Look up, validate, and execute a registered tool."""
+        try:
+            tool: Tool = get_tool(tool_name)
+            if not tool:
+                raise ToolNotFoundError(f"Tool '{tool_name}' not found in registry")
+            tool.validate_arguments(arguments)
+            self.emit(ToolStarted(tool_name=tool_name))
+            return tool.execute(**arguments)
+
+        except ToolNotFoundError as e:
+            log_error(e)
+            return ToolResult(False, error=f'Tool not found in registry: {str(e)}')
+
+        except Exception as e:
+            log_error(e)
+            return ToolResult(False, error=str(e))
 
     def _emit_tool_result_event(self, tool_name: str, result: ToolResult) -> None:
         """Emit the appropriate tool result event based on execution result."""
