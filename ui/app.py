@@ -86,10 +86,25 @@ class TerminantApp(App):
         layout: horizontal;
     }
 
-    #chat-area {
+    #left-pane {
         width: 1fr;
         height: 100%;
-        overflow-y: auto;
+        align: center middle;
+    }
+
+    #chat-input-group {
+        width: 100%;
+        height: auto;
+        max-height: 100%;
+        layout: vertical;
+    }
+
+    #chat-area {
+        width: 100%;
+        height: auto;
+        max-height: 100%;
+        min-height: 8;
+        overflow-y: hidden;
         padding: 1;
         border: solid $primary;
         margin: 1;
@@ -97,24 +112,13 @@ class TerminantApp(App):
     }
 
     #chat-log {
-        height: 100%;
+        height: auto;
+        max-height: 100%;
         overflow-y: auto;
     }
 
-    #logs-panel {
-        width: 40;
-        height: 100%;
-        border: solid $primary;
-        background: $surface;
-        padding: 1;
-    }
-
-    #logs-title {
-        text-style: bold;
-        margin-bottom: 1;
-    }
-
     #input-area {
+        width: 100%;
         height: 3;
         padding: 0 1;
         margin: 1;
@@ -134,6 +138,19 @@ class TerminantApp(App):
 
     #send-button {
         width: 10;
+    }
+
+    #logs-panel {
+        width: 40;
+        height: 100%;
+        border: solid $primary;
+        background: $surface;
+        padding: 1;
+    }
+
+    #logs-title {
+        text-style: bold;
+        margin-bottom: 1;
     }
 
     #status-bar {
@@ -213,33 +230,36 @@ class TerminantApp(App):
         yield Header(show_clock=True)
 
         with Container(id="main-container"):
-            # Content area (chat + logs side by side)
+            # Content area (chat + input on left, logs on right)
             with Horizontal(id="content-area"):
-                # Chat area
-                with Vertical(id="chat-area"):
-                    self.chat_log = RichLog(
-                        id="chat-log",
-                        markup=True,
-                        highlight=False,
-                        wrap=True,
-                        auto_scroll=True,
-                    )
-                    yield self.chat_log
+                # Left pane: contains the centered chat+input group
+                with Vertical(id="left-pane"):
+                    # Chat + input as a single centered group
+                    with Vertical(id="chat-input-group"):
+                        # Chat area
+                        with Vertical(id="chat-area"):
+                            self.chat_log = RichLog(
+                                id="chat-log",
+                                markup=True,
+                                highlight=False,
+                                wrap=True,
+                                auto_scroll=True,
+                            )
+                            yield self.chat_log
 
-                # Logs panel (side panel)
+                        # Input area (immediately below chat area)
+                        with Horizontal(id="input-area"):
+                            self.input_field = Input(
+                                placeholder="Type your message... (Enter to send, Ctrl+D to quit)",
+                                id="input-field",
+                            )
+                            yield self.input_field
+
+                # Logs panel (side panel, independent)
                 with Vertical(id="logs-panel"):
                     yield Label("Logs", id="logs-title")
                     self.logs_view = LogsView(event_bus=self.event_bus, id="logs-view")
                     yield self.logs_view
-
-            # Input area
-            with Horizontal(id="input-area"):
-                self.input_field = Input(
-                    placeholder="Type your message... (Enter to send, Ctrl+D to quit)",
-                    id="input-field",
-                )
-                yield self.input_field
-                # We'll use Enter key on input field instead of a button
 
             # Status bar
             self.status_label = Static("Ready", id="status-bar")
