@@ -102,7 +102,7 @@ class TerminantApp(App):
     #chat-area {
         width: 100%;
         height: auto;
-        max-height: 100%;
+        max-height: 90%;
         min-height: 8;
         overflow-y: hidden;
         padding: 1;
