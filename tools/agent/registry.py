@@ -1,6 +1,6 @@
-from tools.filesystem import create_directory, copy_file, delete_file, file_info, list_files, move_file, read_file, search_files, write_file
-from tools.git import add, blame, branch, checkout, commit, diff, log, merge, rebase, remote, rm, show, stash, status, tag
-from tools.terminal import environment, execute, process_status, which
+from tools.agent.filesystem import create_directory, copy_file, delete_file, file_info, list_files, move_file, read_file, search_files, write_file
+from tools.agent.git import add, blame, branch, checkout, commit, diff, log, merge, rebase, remote, rm, show, stash, status, tag
+from tools.agent.terminal import environment, execute, process_status, which
 
 class ToolNotFoundError(LookupError):
     pass

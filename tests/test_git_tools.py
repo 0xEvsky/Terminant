@@ -2,21 +2,21 @@ from pathlib import Path
 
 from git import Repo
 
-from tools.git.add import GitAdd
-from tools.git.blame import GitBlame
-from tools.git.branch import GitBranch
-from tools.git.checkout import GitCheckout
-from tools.git.commit import GitCommit
-from tools.git.diff import GitDiff
-from tools.git.log import GitLog
-from tools.git.merge import GitMerge
-from tools.git.rebase import GitRebase
-from tools.git.remote import GitRemote
-from tools.git.show import GitShow
-from tools.git.stash import GitStash
-from tools.git.tag import GitTag
-from tools.git.rm import GitRm
-from tools.registry import get_tool
+from tools.agent.git.add import GitAdd
+from tools.agent.git.blame import GitBlame
+from tools.agent.git.branch import GitBranch
+from tools.agent.git.checkout import GitCheckout
+from tools.agent.git.commit import GitCommit
+from tools.agent.git.diff import GitDiff
+from tools.agent.git.log import GitLog
+from tools.agent.git.merge import GitMerge
+from tools.agent.git.rebase import GitRebase
+from tools.agent.git.remote import GitRemote
+from tools.agent.git.show import GitShow
+from tools.agent.git.stash import GitStash
+from tools.agent.git.tag import GitTag
+from tools.agent.git.rm import GitRm
+from tools.agent.registry import get_tool
 
 
 def _create_repo(tmp_path: Path) -> Repo:

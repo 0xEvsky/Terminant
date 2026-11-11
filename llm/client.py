@@ -1,7 +1,7 @@
 from openai import OpenAI
 from config.config import DEFAULT_MODEL
 from logger import log_info
-from tools.registry import tool_registry
+from tools.agent.registry import tool_registry
 
 class LLMClient:
     def __init__(self, api_key=None, model=DEFAULT_MODEL):

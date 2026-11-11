@@ -4,7 +4,7 @@ from llm.client import LLMClient
 from agent.memory import Memory
 from llm.prompts import SYSTEM_PROMPT
 from logger import log_error, log_info
-from tools.registry import ToolNotFoundError, get_tool
+from tools.agent.registry import ToolNotFoundError, get_tool
 from tools.base import Tool, ToolResult
 from events.agent_events import (
     AgentEvent,

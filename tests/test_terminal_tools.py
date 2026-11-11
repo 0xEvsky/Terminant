@@ -1,9 +1,9 @@
 import os
 import platform
-from tools.terminal.environment import Environment
-from tools.terminal.execute import Execute
-from tools.terminal.process_status import ProcessStatus
-from tools.terminal.which import Which
+from tools.agent.terminal.environment import Environment
+from tools.agent.terminal.execute import Execute
+from tools.agent.terminal.process_status import ProcessStatus
+from tools.agent.terminal.which import Which
 
 
 def test_terminal_environment():
