@@ -1,5 +1,5 @@
 from collections import defaultdict
-from events.agent_events import Event
+from events.events import Event
 from logger import log_info
 
 class EventBus:

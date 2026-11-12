@@ -1,6 +1,6 @@
 from textual.widget import Widget
 from events.event_bus import EventBus
-from events.agent_events import Event
+from events.events import Event
 
 class AgentWidget(Widget):
     def __init__(self, event_bus: EventBus, *args, **kwargs):

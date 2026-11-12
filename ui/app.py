@@ -20,7 +20,7 @@ from textual.message import Message
 from textual.events import Key
 
 from events.event_bus import EventBus
-from events.agent_events import (
+from events.events import (
     UserMessageSubmitted,
     AssistantMessageFinished,
     StreamingToken,

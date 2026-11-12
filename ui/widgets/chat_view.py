@@ -2,7 +2,7 @@
 from textual.widgets import Static
 from rich.markup import escape
 from events.event_bus import EventBus
-from events.agent_events import (
+from events.events import (
     UserMessageSubmitted,
     AssistantMessageFinished,
     StreamingToken,

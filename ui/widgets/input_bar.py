@@ -6,7 +6,7 @@ from textual.containers import Horizontal
 from textual.widgets import Static
 from textual.widgets import TextArea
 from events.event_bus import EventBus
-from events.agent_events import UserMessageSubmitted, AgentBusy, AgentIdle
+from events.events import UserMessageSubmitted, AgentBusy, AgentIdle
 from ui.widgets.base import AgentWidget
 
 

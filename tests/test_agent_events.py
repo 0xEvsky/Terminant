@@ -13,7 +13,7 @@ from typing import Optional
 
 import pytest
 
-from events.agent_events import (
+from events.events import (
     Event,
     UserMessageSubmitted,
     AssistantMessageFinished,

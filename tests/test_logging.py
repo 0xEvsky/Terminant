@@ -18,7 +18,7 @@ def test_agent_logs_key_events(capsys):
     agent = Agent(FakeClient(), event_bus)
 
     # Emit user message to trigger processing
-    from events.agent_events import UserMessageSubmitted
+    from events.events import UserMessageSubmitted
     agent.event_bus.emit(UserMessageSubmitted(message="Show me files"))
 
     # Wait for background thread to complete
