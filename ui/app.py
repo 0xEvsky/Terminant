@@ -36,7 +36,9 @@ from events.events import (
 )
 from ui.widgets.logs_view import LogsView
 from ui.widgets.base import AgentWidget
+from ui.widgets.suggestions import SuggestionsWidget
 from logger import log_info, log_error
+from tools.base import Tool
 
 
 class ChatMessage(Message):
@@ -191,6 +193,43 @@ class TerminantApp(App):
     #input-field:focus {
         border: solid $accent;
     }
+
+    #suggestions-widget {
+        width: 100%;
+        margin: 0 1 1 1;
+        border: solid $primary;
+        background: $surface;
+    }
+
+    #suggestions-widget.hidden {
+        display: none;
+    }
+
+    #suggestions-list {
+        height: auto;
+        max-height: 12;
+    }
+
+    #suggestions-list > ListItem {
+        height: 1;
+        padding: 0 1;
+    }
+
+    #suggestions-list > ListItem.-highlighted {
+        background: $accent;
+        color: $text;
+    }
+
+    .suggestion-name {
+        color: $primary;
+        text-style: bold;
+        width: 12;
+    }
+
+    .suggestion-description {
+        color: $text-muted;
+        width: 1fr;
+    }
     """
 
     BINDINGS = [
@@ -202,11 +241,13 @@ class TerminantApp(App):
     status_text = reactive("Ready")
     is_busy = reactive(False)
 
-    def __init__(self, event_bus: EventBus, **kwargs):
+    def __init__(self, event_bus: EventBus, runtime_tools: dict[str, Tool] | None = None, **kwargs):
         super().__init__(**kwargs)
         self.event_bus = event_bus
+        self.runtime_tools = runtime_tools or {}
         self.chat_log: Optional[RichLog] = None
         self.input_field: Optional[Input] = None
+        self.suggestions_widget: Optional[SuggestionsWidget] = None
         self.status_label: Optional[Static] = None
         self.logs_view: Optional[LogsView] = None
         self._setup_event_handlers()
@@ -246,6 +287,13 @@ class TerminantApp(App):
                                 auto_scroll=True,
                             )
                             yield self.chat_log
+
+                        # Suggestions widget (above input area)
+                        self.suggestions_widget = SuggestionsWidget(
+                            runtime_tools=self.runtime_tools,
+                            id="suggestions-widget"
+                        )
+                        yield self.suggestions_widget
 
                         # Input area (immediately below chat area)
                         with Horizontal(id="input-area"):
@@ -413,11 +461,43 @@ class TerminantApp(App):
             # Emit user message submitted event
             self.event_bus.emit(UserMessageSubmitted(message=user_input))
 
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Handle input changes to show/hide suggestions."""
+        if event.input.id == "input-field" and self.suggestions_widget:
+            self.suggestions_widget.show_for_input(event.value)
+
+    def on_suggestions_widget_tool_selected(self, event: SuggestionsWidget.ToolSelected) -> None:
+        """Handle tool selection from suggestions."""
+        if self.input_field and self.suggestions_widget:
+            tool = event.tool
+            # Complete the command in the input field
+            current_text = self.input_field.value
+            # Find the last / in the current text and replace from there
+            last_slash = current_text.rfind('/')
+            if last_slash >= 0:
+                new_text = current_text[:last_slash] + "/" + tool.name + " "
+            else:
+                new_text = "/" + tool.name + " "
+            self.input_field.value = new_text
+            # Move cursor to end
+            self.input_field.cursor_position = len(new_text)
+            # Hide suggestions
+            self.suggestions_widget.hide()
+            # Keep focus on input
+            self.input_field.focus()
+
+    def on_suggestions_widget_dismissed(self, event: SuggestionsWidget.Dismissed) -> None:
+        """Handle suggestions dismissed."""
+        if self.input_field:
+            self.input_field.focus()
+
     def action_clear_input(self) -> None:
         """Clear the input field."""
         if self.input_field:
             self.input_field.clear()
             self.input_field.focus()
+        if self.suggestions_widget:
+            self.suggestions_widget.hide()
 
     def on_key(self, event: Key) -> None:
         """Handle key events."""
