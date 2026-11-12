@@ -26,3 +26,4 @@ class SwitchMode(Tool):
     def execute(self, **kwargs):
         self.log_tool_call(self.name, kwargs)
         new_mode: AgentMode = kwargs.get('new_mode', ManualMode())
+        self.event_bus.emit(ChangeAgentMode(new_mode=new_mode))
