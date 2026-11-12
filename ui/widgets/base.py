@@ -1,6 +1,6 @@
 from textual.widget import Widget
 from events.event_bus import EventBus
-from events.agent_events import AgentEvent
+from events.agent_events import Event
 
 class AgentWidget(Widget):
     def __init__(self, event_bus: EventBus, *args, **kwargs):
@@ -8,11 +8,11 @@ class AgentWidget(Widget):
         self.event_bus = event_bus
         self._subscriptions = []
 
-    def subscribe(self, event_type: type[AgentEvent], handler: callable):
+    def subscribe(self, event_type: type[Event], handler: callable):
         """Subscribe to an event type.
-        
+
         Args:
-            event_type: The AgentEvent subclass to listen for
+            event_type: The Event subclass to listen for
             handler: Callable that receives the event
         """
         self.event_bus.subscribe(event_type, handler)

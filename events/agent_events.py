@@ -1,51 +1,52 @@
 from dataclasses import dataclass
 from tools.base import Tool
+from agent.modes import AgentMode
 
 @dataclass
-class AgentEvent:
-    """Base class for all agent events."""
+class Event:
+    """Base class for all events."""
     ...
 
 @dataclass
-class ErrorEvent(AgentEvent):
+class ErrorEvent(Event):
     """Base class for error events."""
     ...
     error: str
 
 @dataclass
-class StreamingToken(AgentEvent):
+class StreamingToken(Event):
     token: str
 
 @dataclass
-class UserMessageSubmitted(AgentEvent):
+class UserMessageSubmitted(Event):
     message: str
 
 
-class ThinkingStarted(AgentEvent):
+class ThinkingStarted(Event):
     pass
 
 @dataclass
-class AssistantMessageFinished(AgentEvent):
+class AssistantMessageFinished(Event):
     message: str
 
 @dataclass
-class ToolStarted(AgentEvent):
+class ToolStarted(Event):
     tool_name: str
 
 @dataclass
-class ToolCallSucceeded(AgentEvent):
+class ToolCallSucceeded(Event):
     tool_name: str
 
 
-class AgentIdle(AgentEvent):
+class AgentIdle(Event):
     pass
 
 
-class AgentBusy(AgentEvent):
+class AgentBusy(Event):
     pass
 
 @dataclass
-class ConversationLoaded(AgentEvent):
+class ConversationLoaded(Event):
     messages: list
 
 @dataclass
@@ -55,3 +56,6 @@ class ToolCallFailed(ErrorEvent):
 @dataclass
 class APICallFailed(ErrorEvent):
     pass
+
+class ChangeMode(Event):
+    new_mode: AgentMode

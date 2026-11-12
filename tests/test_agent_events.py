@@ -14,7 +14,7 @@ from typing import Optional
 import pytest
 
 from events.agent_events import (
-    AgentEvent,
+    Event,
     UserMessageSubmitted,
     AssistantMessageFinished,
     StreamingToken,

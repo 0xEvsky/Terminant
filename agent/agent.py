@@ -7,7 +7,7 @@ from logger import log_error, log_info
 from tools.agent.registry import ToolNotFoundError, get_tool
 from tools.base import Tool, ToolResult
 from events.agent_events import (
-    AgentEvent,
+    Event,
     ToolCallFailed,
     APICallFailed,
     UserMessageSubmitted,
@@ -29,7 +29,7 @@ class Agent:
 
         self.event_bus.subscribe(UserMessageSubmitted, self._on_message_submit)
 
-    def emit(self, event: AgentEvent):
+    def emit(self, event: Event):
         self.event_bus.emit(event)
 
     def _on_message_submit(self, event: UserMessageSubmitted):
